@@ -1,36 +1,22 @@
-var model = require('../models/movies');
-
-var vote = function (req, res, action) {
-    var movie = {
-        id:req.params.id
-    };
-    model.updateMovie(movie, action, function (success, result) {
-        if (success) res.json({
-            status: 'OK'
-        });
-        else res.json({
-            status: 'Error'
-        });
-    });
-};
+var model = require('../models/wikipost');
+var model = require('../models/wikipostDB');
 
 module.exports = function (app) {
     app.get('/', function (req, res) {
-        model.getMovies(function (result) {
+        model.getPosts(function (result) {
             res.render('index', {
-                movies: result
+                wikiposts: result
             });
         });
     });
 
-    app.post('/movie', function (req, res) {
+    app.post('/wikipost', function (req, res) {
+        var wikipost = new wiki.WikiPost().getData();
+        wikipost.setProp("title", req.body.title);
 
-        var movie = {
-            title:req.body.title,
-            likes:0,
-            unlikes:0
-        };
-        model.saveMovie(movie, function (success, result) {
+        var data = wikipost.getdata();
+
+        model.savePost(data, function (success, result) {
             if (success) res.json({
                 status: 'OK'
             });
@@ -40,23 +26,15 @@ module.exports = function (app) {
         });
     });
 
-    app.put('/movie/like/:id', function (req, res) {
-       vote(req, res, 'likes');
-    });
+	app.delete('/wikipost/delete/:id',function(req,res){
 
-    app.put('/movie/unlike/:id', function (req, res) {
-        vote(req, res, 'unlikes');
-    });
-
-	app.delete('/movie/delete/:id',function(req,res){
-
-		var movie = {
+		var wikipost = {
 	        id:req.params.id
 	    };
 
-        console.log(movie.id);
+        console.log(wikipost.id);
 
-		model.deleteMovie(movie.id, function (success, result) {
+		model.deletePost(wikipost.id, function (success, result) {
             if (success) res.json({
                 status: 'OK'
             });

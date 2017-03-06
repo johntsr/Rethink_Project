@@ -1,17 +1,14 @@
 /*jslint vars: true, plusplus: true, devel: true, nomen: true, indent: 4, maxerr: 50 */
-/* jshint node: true */
-
+/* jshint node: true*/
 'use strict';
 
 var calls = require('../models/callbacks.js');
-
+var wiki = require("../models/wikipost.js");
 var r = require('rethinkdb');
 var config = require('../config');
-
 var EventSource = require('eventsource');
-var url = 'https://stream.wikimedia.org/v2/stream/recentchange';
 
-// console.log(`Connecting to EventStreams at ${url}`);
+var url = 'https://stream.wikimedia.org/v2/stream/recentchange';
 var eventSource = new EventSource(url);
 
 eventSource.onopen = function (event) {
@@ -24,12 +21,11 @@ eventSource.onerror = function (event) {
 
 r.connect(config.database).then( function(conn) {
 
-	var columnsOfInterest = [ 	"bot", "comment", "namespace", "server_name",
-								"timestamp", "title", "type", "user", "wiki" ];
+	var columnsOfInterest = config.tableColumns;
 
 	var written = 0;
 	var count = 0;
-	var Limit = 2;
+	var Limit = 30;
 
     eventSource.onmessage = function(event) {
 
@@ -39,10 +35,7 @@ r.connect(config.database).then( function(conn) {
 		}
 
         var streamInfo = JSON.parse(event.data);
-		var dbData = {};
-		for (var i = 0; i < columnsOfInterest.length; i++) {
-        	dbData[ columnsOfInterest[i] ] = streamInfo[ columnsOfInterest[i] ];
-        }
+		var dbData = new wiki.WikiPost(streamInfo).getData();
 
         r.table(config.table).insert(dbData).run(conn)
 			.then( function (result) {

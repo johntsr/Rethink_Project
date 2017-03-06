@@ -5,7 +5,7 @@ var io = require('socket.io')(server);
 var path = require('path');
 var bodyParser = require('body-parser');
 var config = require('./config');
-var model = require('./models/movies');
+var model = require('./models/wikipostDB');
 
 
 app.use(bodyParser.json());
@@ -21,14 +21,14 @@ server.listen(config.port, function() {
     console.log('Server up and listening on port %d', config.port);
     model.setup(function(data) {
 		if((data.new_val !== null) && (data.old_val !== null)) {
-			// like/unlike update
-			io.emit('updates', data.new_val);
+			// update
+			// TODO
 		} else if((data.new_val !== null) && (data.old_val === null)) {
-			// new movie
-			io.emit('movies', data.new_val);
+			// new wikipost
+			io.emit('wikipost', data.new_val);
 		}
 		else if((data.new_val === null) && (data.old_val !== null)) {
-			// deleted movie
+			// deleted wikipost
 			io.emit('delete', data.old_val);
 		}
     });

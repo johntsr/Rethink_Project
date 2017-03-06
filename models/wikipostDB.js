@@ -1,9 +1,9 @@
 var model = module.exports;
-var calls = require("callbacks.js");
+var calls = require("./callbacks.js");
 var r = require('rethinkdb');
 var config = require('../config');
 
-var TABLE = config.table;	// TODO
+var TABLE = config.table;
 
 model.setup = function (callback) {
 console.log("Setting up RethinkDB...");
@@ -16,11 +16,11 @@ r.connect(config.database).then(function(conn) {
         console.log("Database already created...");
     }).finally(function() {
         // Does the table exist?
-        r.table(MOVIES_TABLE).limit(1).run(conn, function(error, cursor) {
+        r.table(TABLE).limit(1).run(conn, function(error, cursor) {
             var promise;
             if (error) {
                 console.log("Creating table...");
-                promise = r.tableCreate(MOVIES_TABLE).run(conn);
+                promise = r.tableCreate(TABLE).run(conn);
             } else {
                 promise = cursor.toArray();
             }
@@ -28,7 +28,7 @@ r.connect(config.database).then(function(conn) {
             // The table exists, setup the update listener
             promise.then(function(result) {
                 console.log("Setting up update listener...");
-                r.table(MOVIES_TABLE).changes().run(conn).then(function(cursor) {
+                r.table(TABLE).changes().run(conn).then(function(cursor) {
                     cursor.each(function(error, row) {
                         callback(row);
                     });
@@ -39,9 +39,9 @@ r.connect(config.database).then(function(conn) {
 }).error(calls.throwError);
 };
 
-model.getMovies = function (callback) {
+model.getPosts = function (callback) {
 r.connect(config.database).then(function(conn) {
-    r.table(MOVIES_TABLE).run(conn).then(function(cursor) {
+    r.table(TABLE).run(conn).then(function(cursor) {
         cursor.toArray(function(error, results) {
             if (error) throw error;
             callback(results);
@@ -50,9 +50,9 @@ r.connect(config.database).then(function(conn) {
 }).error(calls.throwError);
 };
 
-model.saveMovie = function (movie, callback) {
+model.savePost = function (wikipost, callback) {
 r.connect(config.database).then(function(conn) {
-    r.table(MOVIES_TABLE).insert(movie).run(conn).then(function(results) {
+    r.table(TABLE).insert(wikipost).run(conn).then(function(results) {
         callback(true, results);
     }).error(function(error) {
         callback(false, error);
@@ -62,10 +62,10 @@ r.connect(config.database).then(function(conn) {
 });
 };
 
-model.updateMovie = function (movie, field, callback) {
+model.updatePost = function (wikipost, field, callback) {
 r.connect(config.database).then(function(conn) {
-    r.table(MOVIES_TABLE).get(movie.id).update(function(movie) {
-        return r.object(field, movie(field).add(1));
+    r.table(TABLE).get(wikipost.id).update(function(wikipost) {
+        return r.object(field, wikipost(field).add(1));
     }).run(conn).then(function(results) {
        callback(true, results);
     }).error(function(error) {
@@ -76,9 +76,9 @@ r.connect(config.database).then(function(conn) {
 });
 };
 
-model.deleteMovie = function (movie, callback) {
+model.deletePost = function (wikipost, callback) {
 r.connect(config.database).then(function(conn) {
-    r.table(MOVIES_TABLE).get(movie).delete().run(conn).then(function(results) {
+    r.table(TABLE).get(wikipost).delete().run(conn).then(function(results) {
        callback(true, results);
     }).error(function(error) {
         callback(false, error);
