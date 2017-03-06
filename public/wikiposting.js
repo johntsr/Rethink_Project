@@ -28,6 +28,21 @@ function fixListIndexes(){
 }
 
 $(document).ready(function () {
+
+    $.getScript("fieldparser.js", function(){
+        $.ajax({
+            type: 'GET',
+            url: '/fieldsInfo',
+            success: function(data) {
+            	$('#hiddenP').append(data);
+                var fields = JSON.parse(data);
+                for(var i = 0; i < fields.length; i++){
+                    var temp = createFieldParser(fields[i]).showChoices();
+                }
+            }
+        });
+    });
+
     var socket = io();
 
     socket.on('wikipost', function(wikipost) {

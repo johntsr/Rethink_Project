@@ -1,9 +1,9 @@
-var model = require('../models/wikipost');
-var model = require('../models/wikipostDB');
+var wiki = require('../models/wikipost');
+var db = require('../models/wikipostDB');
 
 module.exports = function (app) {
     app.get('/', function (req, res) {
-        model.getPosts(function (result) {
+        db.getPosts(function (result) {
             res.render('index', {
                 wikiposts: result
             });
@@ -11,12 +11,13 @@ module.exports = function (app) {
     });
 
     app.post('/wikipost', function (req, res) {
+
         var wikipost = new wiki.WikiPost().getData();
         wikipost.setProp("title", req.body.title);
 
         var data = wikipost.getdata();
 
-        model.savePost(data, function (success, result) {
+        db.savePost(data, function (success, result) {
             if (success) res.json({
                 status: 'OK'
             });
@@ -26,15 +27,17 @@ module.exports = function (app) {
         });
     });
 
+    app.get('/fieldsInfo', function (req, res) {
+        db.getPosts(function (result) {
+            res.send( JSON.stringify(wiki.FieldsInfo) );
+        });
+    });
+
 	app.delete('/wikipost/delete/:id',function(req,res){
 
-		var wikipost = {
-	        id:req.params.id
-	    };
+		var id = req.params.id;
 
-        console.log(wikipost.id);
-
-		model.deletePost(wikipost.id, function (success, result) {
+		db.deletePost(id, function (success, result) {
             if (success) res.json({
                 status: 'OK'
             });

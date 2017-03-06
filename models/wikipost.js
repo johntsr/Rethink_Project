@@ -5,11 +5,20 @@
 
 var model = module.exports;
 var config = require("../config.js");
+var typestring = require("./parsestring.js");
 
 var WikiPostProps = [	"bot", "comment", "namespace", "server_name", "timestamp",
  						"title", "type", "user", "wiki"];
 
+var FieldsInfo = [	{name: "bot" , type: "boolean", message: "Check if bots are welcome"} ,
+					{name: "type", type: "mulitple", message: "Check the type(s) of posts you are interested in",
+					 	choices: ["new", "edit", "log", "categorize", "external"]},
+				];
+					// {name: "user", type: "string"},
+					// {name: "wiki", type: "single", choices: ["all", "en", "common"] } ];
+
 model.WikiPostProps = WikiPostProps;
+model.FieldsInfo = FieldsInfo;
 
 function WikiData (someData){
 

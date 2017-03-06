@@ -7,10 +7,16 @@
     <script src="http://code.jquery.com/jquery-2.2.4.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="wikiposting.js"></script>
+    <script src="fieldparser.js"></script>
     <link href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
     </head>
     <body>
         <h1>Wiki Posts Feed</h1>
+
+        <ul id="createFilters" >
+
+        </ul>
+
 
         <ul id='wikiposts'>
             <% wikiposts.forEach(function(wikipost, index){ %>
