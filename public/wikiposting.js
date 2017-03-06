@@ -29,6 +29,18 @@ function fixListIndexes(){
 
 $(document).ready(function () {
 
+	$.ajax({
+        type: 'GET',
+        url: '/templates',
+        success: function(data) {
+            console.log(data);
+        	// $('#hiddenP').append(JSON.stringify(data));
+        	// $('#hiddenP').append(data.toString());
+        	$('#hiddenP').append("dklnfksjbfkfkdbfbhskfbhds");
+        }
+    });
+
+
     $.getScript("fieldparser.js", function(){
         $.ajax({
             type: 'GET',

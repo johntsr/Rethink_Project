@@ -1,5 +1,7 @@
 var wiki = require('../models/wikipost');
 var db = require('../models/wikipostDB');
+var path = require('path');
+fs = require('fs');
 
 module.exports = function (app) {
     app.get('/', function (req, res) {
@@ -31,6 +33,18 @@ module.exports = function (app) {
         db.getPosts(function (result) {
             res.send( JSON.stringify(wiki.FieldsInfo) );
         });
+    });
+
+	app.get('/templates', function (req, res) {
+        res.sendFile( path.resolve('public/templates.html') );
+        // fs.readFile('public/templates.html', 'utf8', function (err,data) {
+        //     if (err) {
+        //         res.send( err );
+        //     }
+        //     else{
+        //         res.send( data );
+        //     }
+        // });
     });
 
 	app.delete('/wikipost/delete/:id',function(req,res){
