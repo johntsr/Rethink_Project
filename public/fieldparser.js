@@ -11,11 +11,11 @@ function BoolField (field){
 	this.field = field;
 }
 
-BoolField.prototype.showChoices = function(){
-	 $("#createFilters").append("<li class='createFilter' id='" + this.field.name + "'>" +
-			 "<span class='position'>" + ($( "li.createFilter" ).length+1) + "</span>" +
-			 "<input class='choice' type='checkbox' value='true' /> " + this.field.message + " <br> " +
-			 "</li> <br>");
+BoolField.prototype.showChoices = function(originalTemplates){
+	var boolFieldTemplate = $('li.createFilter[title="boolean"]', originalTemplates).clone();
+    $(boolFieldTemplate).attr('id', this.field.name);
+    $('.message', boolFieldTemplate).text( this.field.message );
+    $("#createFilters").append( $(boolFieldTemplate) );
 };
 
 
@@ -25,12 +25,20 @@ function MultipleField (field){
 	this.field = field;
 }
 
-MultipleField.prototype.showChoices = function(){
-	var htmlString = "<li class='createFilter' id='" + this.field.name + "'>";
-	htmlString += "<span class='position'>" + ($( "li.createFilter" ).length+1) + "</span>";
+MultipleField.prototype.showChoices = function(originalTemplates){
+
+	var multipleFieldTemplate = $('li.createFilter[title="multiple"]', originalTemplates).clone();
+
+    $(multipleFieldTemplate).attr('id', this.field.name);
+    $('.message', multipleFieldTemplate).text( this.field.message );
+
 	for (var i = 0; i < this.field.choices.length; i++) {
-		htmlString += "<input class='choice' type='checkbox' value='true'> " + this.field.choices[i] + "<br>";
+		var choiceTemplate = $('#multiple_choice_template', multipleFieldTemplate).clone();
+		$(choiceTemplate).attr('id', i);
+		$(choiceTemplate).removeAttr('hidden');
+    	$('.description', choiceTemplate).text( this.field.choices[i] );
+    	$(multipleFieldTemplate).append( $(choiceTemplate) );
 	}
-	htmlString += "</li>";
-	$("#createFilters").append(htmlString);
+
+    $("#createFilters").append( $(multipleFieldTemplate) );
 };

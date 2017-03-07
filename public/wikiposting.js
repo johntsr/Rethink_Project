@@ -1,3 +1,5 @@
+var templates;
+
 function testFun(){
     // $('#hiddenP').text("DSKJGBKSDHBFDBVDSBHDSL");
 }
@@ -28,18 +30,16 @@ function fixListIndexes(){
 }
 
 function addWikiPost(originalTemplates, wikipost){
-    var templates = $('li.wikipost', originalTemplates).clone();
+    var wikiPostTemplate = $('li.wikipost', originalTemplates).clone();
 
-    $(templates).attr('id', wikipost.id);
-    $('.position', templates).text( $( "li.wikipost" ).length + 1 );
-    $('.user', templates).text( wikipost.user );
-    $('.title', templates).text( wikipost.title );
-    $("#wikiposts").append( $(templates) );
+    $(wikiPostTemplate).attr('id', wikipost.id);
+    $('.position', wikiPostTemplate).text( $( "li.wikipost" ).length + 1 );
+    $('.user', wikiPostTemplate).text( wikipost.user );
+    $('.title', wikiPostTemplate).text( wikipost.title );
+    $("#wikiposts").append( $(wikiPostTemplate) );
 }
 
-$(document).ready(function () {
-
-    var templates;
+function getTemplatesAsync(templContainer){
 	$.ajax({
         type: 'GET',
         url: '/templates',
@@ -47,19 +47,22 @@ $(document).ready(function () {
             templates = $.parseHTML(data);
         }
     });
+}
 
+function getWikiPostsAsync(){
     $.ajax({
         type: 'GET',
         url: '/getwikiposts',
         success: function(data) {
             var wikiposts = JSON.parse(data);
             for (var i = 0; i < wikiposts.length; i++) {
-                console.log(wikiposts[i].user);
                 addWikiPost(templates, wikiposts[i]);
             }
         }
     });
+}
 
+function getFieldsInfoAsync(){
     $.getScript("fieldparser.js", function(){
         $.ajax({
             type: 'GET',
@@ -68,11 +71,17 @@ $(document).ready(function () {
             	$('#hiddenP').append(data);
                 var fields = JSON.parse(data);
                 for(var i = 0; i < fields.length; i++){
-                    var temp = createFieldParser(fields[i]).showChoices();
+                    var temp = createFieldParser(fields[i]).showChoices(templates);
                 }
             }
         });
     });
+}
+
+$(document).ready(function () {
+	getTemplatesAsync();
+    getWikiPostsAsync();
+    getFieldsInfoAsync();
 
     var socket = io();
 

@@ -2,17 +2,27 @@ body{
   font-family:arial,sans-serif;
 }
 
-ul.movies {
+ul.createFilters {
   margin: 1em;
   padding: 0;
   list-style-type: none;
 }
 
-li.movie {
+li.createFilter {
+  min-height: 30px;
+}
+
+ul.wikiposts {
+  margin: 1em;
+  padding: 0;
+  list-style-type: none;
+}
+
+li.wikipost {
   min-height: 90px;
 }
 
-li.movie:nth-child(odd) {
+li.wikipost:nth-child(odd) {
   background-color:#eaecee;
 }
 
@@ -24,34 +34,6 @@ li.movie:nth-child(odd) {
   text-align: center;
 	float: left;
 	line-height: 90px;
-}
-
-.vote {
-	width: 150px;
-	height: 90px;
-	margin-right: 12px;
-	float: left;
-	position: relative;
-}
-
-.btnVote {
-	width: 38px;
-	height: 36px;
-	margin: 22px 6px 0;
-	border: 1px solid #666;
-	background: #fff;
-  cursor: pointer;
-  text-align: center;
-  display: block;
-	float: left;
-}
-
-.numVotes {
-  width: 100%;
-  margin: 10px 0 0;
-  font-size: 10px;
-  color: #646464;
-  float: left;
 }
 
 .title {
