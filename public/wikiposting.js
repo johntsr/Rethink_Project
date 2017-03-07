@@ -27,19 +27,45 @@ function fixListIndexes(){
     });
 }
 
+function addWikiPost(originalTemplates, wikipost){
+    // $("#wikiposts").append("<li class='wikipost' id='" + wikipost.id + "'>" +
+    //     "<span class='position'>" + ($( "li.wikipost" ).length+1) + "</span>" +
+    //     "<span class='user'> " + wikipost.user + "</span>" +
+    //     "<span class='title'> " + wikipost.title + " </span>" +
+    //     "<input class='deletePost' type='image' src='delete.png' width='32' height='32' />" +
+    //     "</li>");
+
+    var templates = $(originalTemplates).clone();
+
+    $('li.wikipost', templates).attr('id', wikipost.id);
+    $('li.wikipost > .position', templates).text( $( "li.wikipost" ).length + 1 );
+    $('li.wikipost > .user', templates).text( wikipost.user );
+    $('li.wikipost > .title', templates).text( wikipost.title );
+    $("#wikiposts").append( $('li.wikipost', templates) );
+}
+
 $(document).ready(function () {
 
+    var templates;
 	$.ajax({
         type: 'GET',
         url: '/templates',
         success: function(data) {
-            console.log(data);
-        	// $('#hiddenP').append(JSON.stringify(data));
-        	// $('#hiddenP').append(data.toString());
-        	$('#hiddenP').append("dklnfksjbfkfkdbfbhskfbhds");
+            templates = $.parseHTML(data);
         }
     });
 
+    $.ajax({
+        type: 'GET',
+        url: '/getwikiposts',
+        success: function(data) {
+            var wikiposts = JSON.parse(data);
+            for (var i = 0; i < wikiposts.length; i++) {
+                console.log(wikiposts[i].user);
+                addWikiPost(templates, wikiposts[i]);
+            }
+        }
+    });
 
     $.getScript("fieldparser.js", function(){
         $.ajax({
@@ -57,22 +83,17 @@ $(document).ready(function () {
 
     var socket = io();
 
-    socket.on('wikipost', function(wikipost) {
-	    $("#wikiposts").append("<li class='wikipost' id='" + wikipost.id + "'>" +
-                "<span class='position'>" + ($( "li.wikipost" ).length+1) + "</span>" +
-				"<span class='user'> " + wikipost.user + "</span>" +
-                "<span class='title'> " + wikipost.title + " </span>" +
-                "<input class='deletePost' type='image' src='delete.png' width='32' height='32' />" +
-                "</li>");
+    socket.on('addwikipost', function(wikipost) {
+        addWikiPost(templates, wikipost);
 	});
 
-	socket.on('delete', function(movie) {
-        hidePost(movie.id);
+	socket.on('delete', function(wikipost) {
+        hidePost(wikipost.id);
     });
 
     $('#wikiposts').on('click', '.deletePost', function (e) {
-        var movieId = $(this).parent('li')[0].id;
-        deletePost(movieId);
+        var postID = $(this).parent('li')[0].id;
+        deletePost(postID);
     });
 
     $('#form').on('submit', function (event) {
@@ -85,7 +106,7 @@ $(document).ready(function () {
         } else {
             $.ajax({
                 type: 'POST',
-                url: '/wikipost',
+                url: '/addwikipost',
                 data: {
                     title: t
                 },

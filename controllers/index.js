@@ -1,23 +1,20 @@
 var wiki = require('../models/wikipost');
 var db = require('../models/wikipostDB');
 var path = require('path');
-fs = require('fs');
 
 module.exports = function (app) {
     app.get('/', function (req, res) {
-        db.getPosts(function (result) {
-            res.render('index', {
-                wikiposts: result
-            });
-        });
+        res.sendFile( path.resolve('views/index.html') );
     });
 
-    app.post('/wikipost', function (req, res) {
+    app.post('/addwikipost', function (req, res) {
 
-        var wikipost = new wiki.WikiPost().getData();
+        var wikipost = new wiki.WikiPost();
         wikipost.setProp("title", req.body.title);
 
-        var data = wikipost.getdata();
+        console.log( wikipost.getProp("title") );
+
+        var data = wikipost.getData();
 
         db.savePost(data, function (success, result) {
             if (success) res.json({
@@ -29,6 +26,12 @@ module.exports = function (app) {
         });
     });
 
+    app.get('/getwikiposts', function (req, res) {
+        db.getPosts(function (result) {
+            res.send(JSON.stringify(result));
+        });
+    });
+
     app.get('/fieldsInfo', function (req, res) {
         db.getPosts(function (result) {
             res.send( JSON.stringify(wiki.FieldsInfo) );
@@ -36,15 +39,7 @@ module.exports = function (app) {
     });
 
 	app.get('/templates', function (req, res) {
-        res.sendFile( path.resolve('public/templates.html') );
-        // fs.readFile('public/templates.html', 'utf8', function (err,data) {
-        //     if (err) {
-        //         res.send( err );
-        //     }
-        //     else{
-        //         res.send( data );
-        //     }
-        // });
+        res.sendFile( path.resolve('views/templates.html') );
     });
 
 	app.delete('/wikipost/delete/:id',function(req,res){

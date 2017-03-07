@@ -10,9 +10,8 @@ var model = require('./models/wikipostDB');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.set('views', __dirname + '/views');
+app.use(express.static(path.join(__dirname, 'views')));
 app.use(express.static(path.join(__dirname, 'public')));
-app.set('view engine', 'ejs');
 
 var routes = require('./controllers/index')(app);
 
@@ -25,7 +24,7 @@ server.listen(config.port, function() {
 			// TODO
 		} else if((data.new_val !== null) && (data.old_val === null)) {
 			// new wikipost
-			io.emit('wikipost', data.new_val);
+			io.emit('addwikipost', data.new_val);
 		}
 		else if((data.new_val === null) && (data.old_val !== null)) {
 			// deleted wikipost

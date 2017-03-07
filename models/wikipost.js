@@ -50,11 +50,13 @@ WikiPost.prototype.getData = function(){
 };
 
 WikiPost.prototype.getProp = function(prop){
-	return this.prop;
+	return this.data[prop];
 };
 
 WikiPost.prototype.setProp = function(prop, value){
-	this.prop = value;
+	if( prop in this.data){
+		this.data[prop] = value;
+	}
 };
 
 model.WikiPost = WikiPost;

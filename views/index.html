@@ -19,18 +19,10 @@
 
 
         <ul id='wikiposts'>
-            <% wikiposts.forEach(function(wikipost, index){ %>
-            <li class='wikipost' id='<%= wikipost.id %>'>
-                <span class='position'><%= index+1 %></span>
-                <span class='user'><%= wikipost.user %></span>
-                <span class='title'><%= wikipost.title %></span>
 
-                <input class='deletePost' type="image"
-                    src="delete.png"
-                    width="32" height="32" />
-            </li>
-            <% }) %>
         </ul>
+
+		
         <form id='form' method='post'>
             <h1>Add Wiki Post</h1>
             <input type='text' id='title' placeholder='Title of the wikipost (rest values set to default)...' />
