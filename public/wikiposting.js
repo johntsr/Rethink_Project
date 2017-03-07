@@ -28,20 +28,13 @@ function fixListIndexes(){
 }
 
 function addWikiPost(originalTemplates, wikipost){
-    // $("#wikiposts").append("<li class='wikipost' id='" + wikipost.id + "'>" +
-    //     "<span class='position'>" + ($( "li.wikipost" ).length+1) + "</span>" +
-    //     "<span class='user'> " + wikipost.user + "</span>" +
-    //     "<span class='title'> " + wikipost.title + " </span>" +
-    //     "<input class='deletePost' type='image' src='delete.png' width='32' height='32' />" +
-    //     "</li>");
+    var templates = $('li.wikipost', originalTemplates).clone();
 
-    var templates = $(originalTemplates).clone();
-
-    $('li.wikipost', templates).attr('id', wikipost.id);
-    $('li.wikipost > .position', templates).text( $( "li.wikipost" ).length + 1 );
-    $('li.wikipost > .user', templates).text( wikipost.user );
-    $('li.wikipost > .title', templates).text( wikipost.title );
-    $("#wikiposts").append( $('li.wikipost', templates) );
+    $(templates).attr('id', wikipost.id);
+    $('.position', templates).text( $( "li.wikipost" ).length + 1 );
+    $('.user', templates).text( wikipost.user );
+    $('.title', templates).text( wikipost.title );
+    $("#wikiposts").append( $(templates) );
 }
 
 $(document).ready(function () {
