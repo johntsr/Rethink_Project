@@ -101,47 +101,25 @@ $(document).ready(function () {
         deletePost(postID);
     });
 
-    $('#form').on('submit', function (event) {
+    $('#wikipost_form').on('submit', function (event) {
         event.preventDefault();
-        var input = $('#title');
-        var t = input.val();
+        var sendData = new SendServerData();
+
+        var t = $('#wiki_post_title').val();
         if(!t || t.trim().length === 0) {
-            alert('The title is required');
-            return false;
-        } else {
-            $.ajax({
-                type: 'POST',
-                url: '/addwikipost',
-                data: {
-                    title: t
-                },
-                success: function(data) {
-                    input.val('');
-                }
-            });
+            data.triggerError('The title is required');
         }
+        sendData.add("title", t);
+        sendData.send('/addwikipost');
     });
 
     $('#filter_form').on('submit', function (event) {
         event.preventDefault();
-        var sendData = { error: { triggered: false, description: ""} };
+        var sendData = new SendServerData();
         for (var i = 0; i < fieldParsers.length; i++) {
             fieldParsers[i].storeData(sendData);
         }
-        console.log(JSON.stringify(sendData));
-
-        if( sendData.error.triggered ){
-            alert(sendData.error.description);
-        }
-        else{
-            $.ajax({
-                type: 'POST',
-                url: '/addfilter',
-                data: {
-                    userData: sendData
-                },
-                success: function(data) {}
-            });
-        }
+        console.log(sendData.toString());
+        sendData.send('/addfilter');
     });
 });
