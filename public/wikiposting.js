@@ -1,4 +1,5 @@
 var templates;
+var fieldParsers = [];
 
 function testFun(){
     // $('#hiddenP').text("DSKJGBKSDHBFDBVDSBHDSL");
@@ -23,9 +24,9 @@ function propagateDelete(id){
 }
 
 function fixListIndexes(){
-        $('#wikiposts li').each(function() {
-            var i = $(this).index() + 1;
-            $(this).find('.position').text( i );
+    $('#wikiposts li').each(function() {
+        var i = $(this).index() + 1;
+        $(this).find('.position').text( i );
     });
 }
 
@@ -71,7 +72,9 @@ function getFieldsInfoAsync(){
             	$('#hiddenP').append(data);
                 var fields = JSON.parse(data);
                 for(var i = 0; i < fields.length; i++){
-                    var temp = createFieldParser(fields[i]).showChoices(templates);
+                    var temp = createFieldParser(fields[i]);
+                    temp.showChoices(templates);
+                    fieldParsers.push(temp);
                 }
             }
         });
@@ -115,6 +118,29 @@ $(document).ready(function () {
                 success: function(data) {
                     input.val('');
                 }
+            });
+        }
+    });
+
+    $('#filter_form').on('submit', function (event) {
+        event.preventDefault();
+        var sendData = { error: { triggered: false, description: ""} };
+        for (var i = 0; i < fieldParsers.length; i++) {
+            fieldParsers[i].storeData(sendData);
+        }
+        console.log(JSON.stringify(sendData));
+
+        if( sendData.error.triggered ){
+            alert(sendData.error.description);
+        }
+        else{
+            $.ajax({
+                type: 'POST',
+                url: '/addfilter',
+                data: {
+                    userData: sendData
+                },
+                success: function(data) {}
             });
         }
     });

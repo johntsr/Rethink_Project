@@ -42,6 +42,10 @@ module.exports = function (app) {
         res.sendFile( path.resolve('views/templates.html') );
     });
 
+	app.post('/addfilter', function (req, res) {
+        console.log(req.body.userData);
+    });
+
 	app.delete('/wikipost/delete/:id',function(req,res){
 
 		var id = req.params.id;

@@ -1,3 +1,15 @@
+function TypeField(field){
+	this.field = field;
+}
+
+TypeField.prototype.fieldName = function(){
+	return this.field.name;
+};
+
+TypeField.prototype.error = function(data){
+	return data.error.triggered;
+};
+
 function createFieldParser(field){
 	switch ( field.type ) {
 		case "boolean": return new BoolField(field);
@@ -8,8 +20,25 @@ function createFieldParser(field){
 
 
 function BoolField (field){
-	this.field = field;
+	TypeField.call(this, field);
 }
+
+BoolField.prototype = Object.create(TypeField.prototype);
+BoolField.prototype.constructor = BoolField;
+
+BoolField.prototype.storeData = function(data){
+
+	if( this.error(data) ){
+		return;
+	}
+
+	if( $('#' + this.field.name + " .choice").is(":checked") ){
+		data[this.field.name] = true;
+	}
+	else{
+		data[this.field.name] = false;
+	}
+};
 
 BoolField.prototype.showChoices = function(originalTemplates){
 	var boolFieldTemplate = $('li.createFilter[title="boolean"]', originalTemplates).clone();
@@ -22,8 +51,40 @@ BoolField.prototype.showChoices = function(originalTemplates){
 
 
 function MultipleField (field){
-	this.field = field;
+	TypeField.call(this, field);
 }
+
+MultipleField.prototype = Object.create(TypeField.prototype);
+MultipleField.prototype.constructor = MultipleField;
+
+MultipleField.prototype.storeData = function(data){
+
+	if( this.error(data) ){
+		return;
+	}
+
+	var myData = {};
+
+	var error = true;
+	for (var i = 0; i < this.field.choices.length; i++) {
+		if( $('#' + this.field.name + " #" + i + " .choice").is(":checked") ){
+			myData[i] = true;
+			error = false;
+		}
+		else{
+			myData[i] = false;
+		}
+	}
+
+	if( error ){
+		data.error.triggered = true;
+		data.error.description = "In field <<" + this.field.name + ">>, at least 1 option must be selected!";
+	}
+	else{
+		data[this.field.name] = myData;
+	}
+
+};
 
 MultipleField.prototype.showChoices = function(originalTemplates){
 
