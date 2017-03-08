@@ -21,9 +21,11 @@ server.listen(config.port, function() {
     console.log('Server up and listening on port %d', config.port);
 	model.setup(function(error, data){
         console.log("Gotcha!");
-        io.emit('update', data.new_val);
+        if( data.new_val !== null ){    
+            io.emit('update', data.new_val);
+        }
     });
-    
+
     // model.setup(function(data) {
 	// 	if((data.new_val !== null) && (data.old_val !== null)) {
 	// 		// update

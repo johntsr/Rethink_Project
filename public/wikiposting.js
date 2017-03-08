@@ -97,8 +97,7 @@ $(document).ready(function () {
     });
 
 	socket.on('update', function(wikipost) {
-		console.log("lalalaalal");
-		console.log(wikipost);
+		addWikiPost(templates, wikipost);
     });
 
     $('#wikiposts').on('click', '.deletePost', function (e) {
