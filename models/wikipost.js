@@ -5,15 +5,16 @@
 
 var model = module.exports;
 var config = require("../config.js");
-var filterparser = require("./filterparser.js");
+// var filterparser = require("./filterparser.js");
 
 var WikiPostProps = [	"bot", "comment", "namespace", "server_name", "timestamp",
  						"title", "type", "user", "wiki"];
 
 var FieldsInfo = [	{name: "bot" , type: "boolean", message: "Check if bots are welcome"} ,
-					{name: "type", type: "mulitple", message: "Check the type(s) of posts you are interested in",
+					{name: "type", type: "multiple", message: "Check the type(s) of posts you are interested in",
 					 	choices: ["new", "edit", "log", "categorize", "external"]},
 				];
+
 					// {name: "user", type: "string"},
 					// {name: "wiki", type: "single", choices: ["all", "en", "common"] } ];
 

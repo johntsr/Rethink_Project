@@ -1,5 +1,5 @@
 function SendServerData(){
-	this.data = {};
+	this.data = [];
 	this.errorInfo = { error: { triggered: false, description: ""} };
 }
 
@@ -20,9 +20,9 @@ SendServerData.prototype.error = function(){
 	return this.errorInfo.triggered;
 };
 
-SendServerData.prototype.add = function(newLabel, newData){
+SendServerData.prototype.add = function(newData){
 	if( !this.error() ){
-		this.data[newLabel] = newData;
+		this.data.push(newData);
 	}
 };
 
@@ -53,10 +53,18 @@ TypeField.prototype.fieldName = function(){
 	return this.field.name;
 };
 
+TypeField.prototype.fieldMessage = function(){
+	return this.field.message;
+};
+
+TypeField.prototype.storeName = function(myData){
+	myData.name = this.fieldName();
+};
+
 function createFieldParser(field){
 	switch ( field.type ) {
 		case "boolean": return new BoolField(field);
-		case "mulitple": return new MultipleField(field);
+		case "multiple": return new MultipleField(field);
 		default: return null;
 	}
 }
@@ -72,14 +80,19 @@ BoolField.prototype = Object.create(TypeField.prototype);
 BoolField.prototype.constructor = BoolField;
 
 BoolField.prototype.storeData = function(data){
-	var checked = $('#' + this.field.name + " .choice").is(":checked");
-	data.add(this.field.name, checked);
+	var checked = $('#' + this.fieldName() + " .choice").is(":checked");
+	if( checked ){
+		var myData = {};
+		this.storeName(myData);
+		myData.value = checked;
+		data.add(myData);
+	}
 };
 
 BoolField.prototype.showChoices = function(originalTemplates){
 	var boolFieldTemplate = $('li.createFilter[title="boolean"]', originalTemplates).clone();
-    $(boolFieldTemplate).attr('id', this.field.name);
-    $('.message', boolFieldTemplate).text( this.field.message );
+    $(boolFieldTemplate).attr('id', this.fieldName());
+    $('.message', boolFieldTemplate).text( this.fieldMessage() );
     $("#createFilters").append( $(boolFieldTemplate) );
 };
 
@@ -95,29 +108,31 @@ MultipleField.prototype.constructor = MultipleField;
 
 MultipleField.prototype.storeData = function(data){
 	var myData = {};
+	this.storeName(myData);
+	myData.value = {};
 
 	var error = true;
 	for (var i = 0; i < this.field.choices.length; i++) {
-		var checked = $('#' + this.field.name + " #" + i + " .choice").is(":checked");
-		myData[i] = checked;
+		var checked = $('#' + this.fieldName() + " #" + i + " .choice").is(":checked");
+		myData.value[i] = checked;
 		if( checked ){
 			error = false;
 		}
 	}
 
 	if( error ){
-		data.triggerError("In field <<" + this.field.name + ">>, at least 1 option must be selected!");
+		data.triggerError("In field <<" + this.fieldName() + ">>, at least 1 option must be selected!");
 	}
 
-	data.add(this.field.name, myData);
+	data.add(myData);
 };
 
 MultipleField.prototype.showChoices = function(originalTemplates){
 
 	var multipleFieldTemplate = $('li.createFilter[title="multiple"]', originalTemplates).clone();
 
-    $(multipleFieldTemplate).attr('id', this.field.name);
-    $('.message', multipleFieldTemplate).text( this.field.message );
+    $(multipleFieldTemplate).attr('id', this.fieldName());
+    $('.message', multipleFieldTemplate).text( this.fieldMessage() );
 
 	for (var i = 0; i < this.field.choices.length; i++) {
 		var choiceTemplate = $('#multiple_choice_template', multipleFieldTemplate).clone();

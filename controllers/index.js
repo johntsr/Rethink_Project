@@ -1,5 +1,6 @@
 var wiki = require('../models/wikipost');
 var db = require('../models/wikipostDB');
+var filters = require('../models/filterparser.js');
 var path = require('path');
 
 module.exports = function (app) {
@@ -44,9 +45,14 @@ module.exports = function (app) {
 
 	app.post('/addfilter', function (req, res) {
         console.log(req.body.userData);
-		var wikipostFilter;
-		// .....
-		db.listenFilter(wikipostFilter);
+        console.log(filters.createFilter(req.body.userData));
+        db.listenFilter( filters.createFilter(req.body.userData),
+            function(error, data){
+                if ( !error ){
+                    console.log("Gotcha!");
+                    io.emit('update', data.new_val);
+                }
+            });
     });
 
 	app.delete('/wikipost/delete/:id',function(req,res){

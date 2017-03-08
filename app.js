@@ -13,7 +13,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'views')));
 app.use(express.static(path.join(__dirname, 'public')));
 
-var routes = require('./controllers/index')(app);
+var routes = require('./controllers/index')(app, server);
 
 
 server.listen(config.port, function() {

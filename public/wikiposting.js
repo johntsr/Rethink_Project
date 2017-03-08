@@ -96,6 +96,11 @@ $(document).ready(function () {
         hidePost(wikipost.id);
     });
 
+	socket.on('update', function(wikipost) {
+		console.log("lalalaalal");
+		console.log(wikipost);
+    });
+
     $('#wikiposts').on('click', '.deletePost', function (e) {
         var postID = $(this).parent('li')[0].id;
         deletePost(postID);
@@ -119,7 +124,7 @@ $(document).ready(function () {
         for (var i = 0; i < fieldParsers.length; i++) {
             fieldParsers[i].storeData(sendData);
         }
-        console.log(sendData.toString());
+        // console.log(sendData.toString());
         sendData.send('/addfilter');
     });
 });

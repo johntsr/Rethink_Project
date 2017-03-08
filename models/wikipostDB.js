@@ -77,10 +77,13 @@ r.connect(config.database).then(function(conn) {
 
 model.listenFilter = function (wikipostFilter, callback) {
 r.connect(config.database).then(function(conn) {
-    r.table(TABLE).filter( wikipostFilter ).run(conn).then(function(results) {
-       callback(true, results);
+	console.log("will listen for: " + wikipostFilter);
+    r.table(TABLE).filter( wikipostFilter ).changes().run(conn).then(function(cursor) {
+       cursor.each(function(error, row) {
+           callback(false, row);
+       });
     }).error(function(error) {
-        callback(false, error);
+        callback(true, error);
     });
 }).error(function(error) {
     callback(false, error);
