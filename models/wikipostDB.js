@@ -28,9 +28,10 @@ r.connect(config.database).then(function(conn) {
             // The table exists, setup the update listener
             promise.then(function(result) {
                 console.log("Setting up update listener...");
-                r.table(TABLE).changes().run(conn).then(function(cursor) {
+                r.table(config.filters).changes({includeInitial: true}).run(conn).then(function(cursor) {
                     cursor.each(function(error, row) {
-                        callback(row);
+                        console.log("Found filter");
+                        model.listenFilter( row.new_val.filter, callback );
                     });
                 });
             }).error(calls.throwError);
@@ -74,10 +75,14 @@ r.connect(config.database).then(function(conn) {
 });
 };
 
+model.addFilter = function (wikipostFilter) {
+r.connect(config.database).then(function(conn) {
+    r.table(config.filters).insert({filter: wikipostFilter}).run(conn).then(calls.printOK).error(calls.throwError);
+}).error(calls.noFun);
+};
 
 model.listenFilter = function (wikipostFilter, callback) {
 r.connect(config.database).then(function(conn) {
-	console.log("will listen for: " + wikipostFilter);
     r.table(TABLE).filter( wikipostFilter ).changes().run(conn).then(function(cursor) {
        cursor.each(function(error, row) {
            callback(false, row);

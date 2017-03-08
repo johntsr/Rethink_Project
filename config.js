@@ -8,6 +8,7 @@ module.exports = {
   },
 
   table: "Wiki",
+  filters: "Filters",
 
   port: process.env.APP_PORT || 3000
 };

@@ -14,3 +14,7 @@ model.throwError =
 
 model.noFun =
 	function(err) {};
+
+
+model.printOK =
+	function(err) { console.log("OK");};

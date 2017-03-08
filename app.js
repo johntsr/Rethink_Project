@@ -6,6 +6,7 @@ var path = require('path');
 var bodyParser = require('body-parser');
 var config = require('./config');
 var model = require('./models/wikipostDB');
+var calls = require('./models/callbacks');
 
 
 app.use(bodyParser.json());
@@ -18,17 +19,22 @@ var routes = require('./controllers/index')(app, server);
 
 server.listen(config.port, function() {
     console.log('Server up and listening on port %d', config.port);
-    model.setup(function(data) {
-		if((data.new_val !== null) && (data.old_val !== null)) {
-			// update
-			// TODO
-		} else if((data.new_val !== null) && (data.old_val === null)) {
-			// new wikipost
-			io.emit('addwikipost', data.new_val);
-		}
-		else if((data.new_val === null) && (data.old_val !== null)) {
-			// deleted wikipost
-			io.emit('delete', data.old_val);
-		}
+	model.setup(function(error, data){
+        console.log("Gotcha!");
+        io.emit('update', data.new_val);
     });
+    
+    // model.setup(function(data) {
+	// 	if((data.new_val !== null) && (data.old_val !== null)) {
+	// 		// update
+	// 		// TODO
+	// 	} else if((data.new_val !== null) && (data.old_val === null)) {
+	// 		// new wikipost
+	// 		io.emit('addwikipost', data.new_val);
+	// 	}
+	// 	else if((data.new_val === null) && (data.old_val !== null)) {
+	// 		// deleted wikipost
+	// 		io.emit('delete', data.old_val);
+	// 	}
+    // });
 });

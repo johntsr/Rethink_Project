@@ -46,13 +46,7 @@ module.exports = function (app) {
 	app.post('/addfilter', function (req, res) {
         console.log(req.body.userData);
         console.log(filters.createFilter(req.body.userData));
-        db.listenFilter( filters.createFilter(req.body.userData),
-            function(error, data){
-                if ( !error ){
-                    console.log("Gotcha!");
-                    io.emit('update', data.new_val);
-                }
-            });
+		db.addFilter(filters.createFilter(req.body.userData));
     });
 
 	app.delete('/wikipost/delete/:id',function(req,res){
