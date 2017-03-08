@@ -44,6 +44,9 @@ module.exports = function (app) {
 
 	app.post('/addfilter', function (req, res) {
         console.log(req.body.userData);
+		var wikipostFilter;
+		// .....
+		db.listenFilter(wikipostFilter);
     });
 
 	app.delete('/wikipost/delete/:id',function(req,res){

@@ -62,11 +62,9 @@ r.connect(config.database).then(function(conn) {
 });
 };
 
-model.updatePost = function (wikipost, field, callback) {
+model.deletePost = function (wikipost, callback) {
 r.connect(config.database).then(function(conn) {
-    r.table(TABLE).get(wikipost.id).update(function(wikipost) {
-        return r.object(field, wikipost(field).add(1));
-    }).run(conn).then(function(results) {
+    r.table(TABLE).get(wikipost).delete().run(conn).then(function(results) {
        callback(true, results);
     }).error(function(error) {
         callback(false, error);
@@ -76,9 +74,10 @@ r.connect(config.database).then(function(conn) {
 });
 };
 
-model.deletePost = function (wikipost, callback) {
+
+model.listenFilter = function (wikipostFilter, callback) {
 r.connect(config.database).then(function(conn) {
-    r.table(TABLE).get(wikipost).delete().run(conn).then(function(results) {
+    r.table(TABLE).filter( wikipostFilter ).run(conn).then(function(results) {
        callback(true, results);
     }).error(function(error) {
         callback(false, error);
