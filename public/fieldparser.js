@@ -68,8 +68,6 @@ function loadTemplateTo(originalTemplates, loadSelector, content){
 	}
 
 	return template;
-
-    // $(destination).append( $(template) );
 }
 
 

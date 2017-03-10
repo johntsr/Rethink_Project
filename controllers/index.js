@@ -11,7 +11,7 @@ module.exports = function (app) {
     app.post('/addwikipost', function (req, res) {
 
         var wikipost = new wiki.WikiPost();
-        wikipost.setProp("title", req.body.userData.title);
+        wikipost.setProp("title", req.body.userData[0].title);
 
         console.log( wikipost.getProp("title") );
 

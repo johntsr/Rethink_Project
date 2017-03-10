@@ -31,12 +31,9 @@ function fixListIndexes(){
 }
 
 function addWikiPost(originalTemplates, wikipost){
-    var wikiPostTemplate = $('li.wikipost', originalTemplates).clone();
-
-    $(wikiPostTemplate).attr('id', wikipost.id);
-    $('.position', wikiPostTemplate).text( $( "li.wikipost" ).length + 1 );
-    $('.user', wikiPostTemplate).text( wikipost.user );
-    $('.title', wikiPostTemplate).text( wikipost.title );
+    var loadSelector = 'li.wikipost';
+	var content = { attrs: { id: wikipost.id }, text: { '.message': wikipost.comment, '.user': wikipost.user, '.title': wikipost.title}};
+	var wikiPostTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
     $("#wikiposts").append( $(wikiPostTemplate) );
 }
 
@@ -112,7 +109,7 @@ $(document).ready(function () {
         if(!t || t.trim().length === 0) {
             data.triggerError('The title is required');
         }
-        sendData.add("title", t);
+        sendData.add({"title": t});
         sendData.send('/addwikipost');
     });
 

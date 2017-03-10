@@ -5,21 +5,37 @@ body{
 ul.createFilters {
   margin: 1em;
   padding: 0;
-  list-style-type: none;
+  /*list-style-type: none;*/
 }
 
-li.createFilter .choice:nth-child(odd) {
-  background-color:#aaecee;
+#list_choice_template{
+  display: none;
 }
 
-li.createFilter .choice{
+#choice_template{
+  display: none;
+}
+
+li.createFilter {
+  min-height: 20px;
+}
+
+li.createFilter li.choice{
 	display: block;
   margin: auto;
 }
 
-li.createFilter {
-  min-height: 30px;
+li.createFilter li.choice .choiceBtn{
+	display: block;
+  margin-right: 400px;
+  
 }
+
+li.createFilter li.choice:nth-child(odd) {
+  background-color:#aaecee;
+}
+
+
 
 ul.wikiposts {
   margin: 1em;
