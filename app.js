@@ -21,22 +21,16 @@ server.listen(config.port, function() {
     console.log('Server up and listening on port %d', config.port);
 	model.setup(function(error, data){
         console.log("Gotcha!");
-        if( data.new_val !== null ){    
-            io.emit('update', data.new_val);
-        }
+		if((data.new_val !== null) && (data.old_val !== null)) {
+				// update
+				io.emit('update', data.new_val);
+			} else if((data.new_val !== null) && (data.old_val === null)) {
+				// new wikipost
+				io.emit('new', data.new_val);
+			}
+			else if((data.new_val === null) && (data.old_val !== null)) {
+				// deleted wikipost
+				io.emit('delete', data.old_val);
+			}
     });
-
-    // model.setup(function(data) {
-	// 	if((data.new_val !== null) && (data.old_val !== null)) {
-	// 		// update
-	// 		// TODO
-	// 	} else if((data.new_val !== null) && (data.old_val === null)) {
-	// 		// new wikipost
-	// 		io.emit('addwikipost', data.new_val);
-	// 	}
-	// 	else if((data.new_val === null) && (data.old_val !== null)) {
-	// 		// deleted wikipost
-	// 		io.emit('delete', data.old_val);
-	// 	}
-    // });
 });

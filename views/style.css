@@ -8,6 +8,15 @@ ul.createFilters {
   list-style-type: none;
 }
 
+li.createFilter .choice:nth-child(odd) {
+  background-color:#aaecee;
+}
+
+li.createFilter .choice{
+	display: block;
+  margin: auto;
+}
+
 li.createFilter {
   min-height: 30px;
 }
@@ -22,8 +31,13 @@ li.wikipost {
   min-height: 90px;
 }
 
+li.wikipost .deletePost {
+  display: block;
+  margin: auto;
+}
+
 li.wikipost:nth-child(odd) {
-  background-color:#eaecee;
+  background-color:#aaecee;
 }
 
 .position {

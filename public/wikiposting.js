@@ -69,7 +69,6 @@ function getFieldsInfoAsync(){
             type: 'GET',
             url: '/fieldsInfo',
             success: function(data) {
-            	$('#hiddenP').append(data);
                 var fields = JSON.parse(data);
                 for(var i = 0; i < fields.length; i++){
                     var temp = createFieldParser(fields[i]);
@@ -88,7 +87,7 @@ $(document).ready(function () {
 
     var socket = io();
 
-    socket.on('addwikipost', function(wikipost) {
+    socket.on('new', function(wikipost) {
         addWikiPost(templates, wikipost);
 	});
 
@@ -125,5 +124,10 @@ $(document).ready(function () {
         }
         // console.log(sendData.toString());
         sendData.send('/addfilter');
+    });
+
+    $('#filterstuff').hide();
+    $('#hideshowfilter').click(function(){
+        $('#filterstuff').toggle("fast");
     });
 });

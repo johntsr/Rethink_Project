@@ -9,15 +9,17 @@
 
 <li class='createFilter' title="boolean" id=''>
 	<span class='message'></span>
-	<input class='choice' type='checkbox' value='true' />
+	<input class='choiceBtn' type='checkbox' value='true' />
 </li>
 
 <li class='createFilter' title="multiple" id=''>
 	<span class='message'></span>
-	<div id='multiple_choice_template' hidden >
-		<span class='description'></span>
-		<input class='choice' type='checkbox' value='true' />
-	</div>
+	<ul id='list_choice_template'>
+		<li id='choice_template' class='choice' hidden>
+			<span class='description' hidden></span>
+			<input class='choiceBtn' type='checkbox' value='true' hidden />
+		</li>
+	</ul>
 </li>
 
 </div>
