@@ -1,12 +1,9 @@
 var templates;
 var fieldParsers = [];
 
-function testFun(){
-    // $('#hiddenP').text("DSKJGBKSDHBFDBVDSBHDSL");
-}
+
 
 function deletePost(id) {
-    // $('#hiddenP').text("OKOKOKOO");
     hidePost(id);
     propagateDelete(id);
     fixListIndexes();

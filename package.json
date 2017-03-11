@@ -15,6 +15,12 @@
     "express": "4.13.4",
     "path": "0.12.7",
     "rethinkdb": "2.3.2",
-    "socket.io": "1.4.6"
+    "socket.io": "1.4.6",
+  	"passport" : "~0.1.17",
+    "passport-local" : "~0.1.6",
+  	"bcrypt-nodejs" : "latest",
+  	"cookie-parser" : "latest",
+  	"express-session" : "latest",
+  	"express-logger" : "latest"
   }
 }
