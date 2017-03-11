@@ -43,6 +43,9 @@ SendServerData.prototype.send = function(serverURL){
 };
 
 
+
+
+
 function loadTemplateTo(originalTemplates, loadSelector, content){
 	var template = $(loadSelector, originalTemplates).clone();
 
@@ -57,13 +60,6 @@ function loadTemplateTo(originalTemplates, loadSelector, content){
 		var textValues = content.text;
 		for (var text in textValues) {
 	    	$(text, template).text( textValues[text] );
-		}
-	}
-
-	if( "unHide" in content){
-		var unHideValues = content.unHide;
-		for(var unHide = 0; unHide < unHideValues.length; unHide++){
-			$(unHideValues[unHide], template).removeAttr('hidden');
 		}
 	}
 
@@ -107,7 +103,7 @@ BoolField.prototype.constructor = BoolField;
 
 BoolField.prototype.storeData = function(data){
 	var checked = $('#' + this.fieldName() + " .choiceBtn").is(":checked");
-	if( checked ){
+	if( !checked ){
 		var myData = {};
 		this.storeName(myData);
 		myData.value = checked;
@@ -164,10 +160,14 @@ MultipleField.prototype.showChoices = function(originalTemplates){
 
 	for (var i = 0; i < this.field.choices.length; i++) {
 		loadSelector = '#choice_template';
-		content = { attrs: {id: i}, text: { '.description': this.field.choices[i] }, unHide: ['.choice', '.description', '.choiceBtn']};
+		content = { attrs: {id: i}, text: { '.description': this.field.choices[i] }};
 		var choice = loadTemplateTo(choiceTemplate, loadSelector, content);
 		$(choiceTemplate).append( $(choice) );
 	}
+
+	$('#choice_template', choiceTemplate).remove();
+	$('#list_choice_template', multipleFieldTemplate).remove();
+
 	$(multipleFieldTemplate).append( $(choiceTemplate) );
     $("#createFilters").append( $(multipleFieldTemplate) );
 };

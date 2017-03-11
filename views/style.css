@@ -8,31 +8,25 @@ ul.createFilters {
   /*list-style-type: none;*/
 }
 
-#list_choice_template{
-  display: none;
-}
-
-#choice_template{
-  display: none;
-}
-
 li.createFilter {
   min-height: 20px;
 }
 
 li.createFilter li.choice{
-	display: block;
-  margin: auto;
+	max-width: 150px;
 }
 
 li.createFilter li.choice .choiceBtn{
-	display: block;
-  margin-right: 400px;
-  
+  float: right;
+  clear: right;
 }
 
 li.createFilter li.choice:nth-child(odd) {
-  background-color:#aaecee;
+  background-color:skyblue;
+}
+
+li.createFilter li.choice:nth-child(even) {
+  background-color:khaki;
 }
 
 
@@ -48,8 +42,10 @@ li.wikipost {
 }
 
 li.wikipost .deletePost {
-  display: block;
-  margin: auto;
+  float: right;
+  clear: right;
+  margin-top: 30px;
+  margin-right: 300px;
 }
 
 li.wikipost:nth-child(odd) {
