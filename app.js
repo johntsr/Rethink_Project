@@ -41,17 +41,17 @@ var routes = require('./controllers/index')(app, passport);
 
 server.listen(config.port, function() {
     console.log('Server up and listening on port %d', config.port);
-    model.setup(function(error, data) {
+    model.setup(function(error, id, data) {
         console.log("Gotcha!");
         if ((data.new_val !== null) && (data.old_val !== null)) {
             // update
-            io.emit('update', data.new_val);
+            io.emit('update_' + id, data.new_val);
         } else if ((data.new_val !== null) && (data.old_val === null)) {
             // new wikipost
-            io.emit('new', data.new_val);
+            io.emit('new_' + id, data.new_val);
         } else if ((data.new_val === null) && (data.old_val !== null)) {
             // deleted wikipost
-            io.emit('delete', data.old_val);
+            io.emit('delete_' + id, data.old_val);
         }
     });
 });

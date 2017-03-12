@@ -10,7 +10,6 @@ module.exports = function (app, passport) {
 	});
 
 	app.get('/login', function (req, res) {
-		// res.sendFile( path.resolve('views/login.html') );
 		res.render(path.resolve('views/login'), {
         message: req.flash('message')
     	} );
@@ -22,13 +21,17 @@ module.exports = function (app, passport) {
         failureFlash: true
         }));
 
-    app.get('/logout', function(req, res) {
+    app.post('/logout', function(req, res) {
 		req.logout();
 		res.redirect('/login');
 	});
 
 	app.get('/profile', isLoggedIn, function (req, res) {
 		res.sendFile( path.resolve('views/profile.html') );
+	});
+
+	app.get('/profile/id', isLoggedIn, function (req, res) {
+		res.send(JSON.stringify({id: req.user.id}));
 	});
 
     app.post('/profile/addwikipost', isLoggedIn, function (req, res) {
@@ -67,9 +70,9 @@ module.exports = function (app, passport) {
     });
 
 	app.post('/profile/addfilter', isLoggedIn, function (req, res) {
-        console.log(req.body.userData);
         console.log(filters.createFilter(req.body.userData));
-		db.addFilter(filters.createFilter(req.body.userData));
+		console.log(req.user.id);
+		db.addFilter(req.user.id, filters.createFilter(req.body.userData));
     });
 
 	app.delete('/profile/wikipost/delete/:id', isLoggedIn, function(req,res){

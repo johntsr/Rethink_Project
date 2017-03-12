@@ -1,6 +1,6 @@
 var templates;
+var ID;
 var fieldParsers = [];
-
 
 
 function deletePost(id) {
@@ -29,9 +29,31 @@ function fixListIndexes(){
 
 function addWikiPost(originalTemplates, wikipost){
     var loadSelector = 'li.wikipost';
-	var content = { attrs: { id: wikipost.id }, text: { '.message': wikipost.comment, '.user': wikipost.user, '.title': wikipost.title}};
+    var index = $( "li.wikipost" ).length + 1;
+	var content = { attrs: { id: wikipost.id }, text: { '.message': wikipost.comment, '.user': wikipost.user, '.title': wikipost.title, '.position': index}};
 	var wikiPostTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
     $("#wikiposts").append( $(wikiPostTemplate) );
+}
+
+function getIDAsync(socket){
+    $.ajax({
+        type: 'GET',
+        url: '/profile/id',
+        success: function(data) {
+            ID = JSON.parse(data).id;
+            socket.on('new_' + ID, function(wikipost) {
+                addWikiPost(templates, wikipost);
+        	});
+
+        	socket.on('delete_' + ID, function(wikipost) {
+                hidePost(wikipost.id);
+            });
+
+        	socket.on('update_' + ID, function(wikipost) {
+        		addWikiPost(templates, wikipost);
+            });
+        }
+    });
 }
 
 function getTemplatesAsync(templContainer){
@@ -75,23 +97,12 @@ function getFieldsInfoAsync(){
 }
 
 $(document).ready(function () {
+    var socket = io();
+
+    getIDAsync(socket);
 	getTemplatesAsync();
     getWikiPostsAsync();
     getFieldsInfoAsync();
-
-    var socket = io();
-
-    socket.on('new', function(wikipost) {
-        addWikiPost(templates, wikipost);
-	});
-
-	socket.on('delete', function(wikipost) {
-        hidePost(wikipost.id);
-    });
-
-	socket.on('update', function(wikipost) {
-		addWikiPost(templates, wikipost);
-    });
 
     $('#wikiposts').on('click', '.deletePost', function (e) {
         var postID = $(this).parent('li')[0].id;

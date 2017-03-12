@@ -28,10 +28,14 @@ r.connect(config.database).then(function(conn) {
             // The table exists, setup the update listener
             promise.then(function(result) {
                 console.log("Setting up update listener...");
-                r.table(config.filters).changes({includeInitial: true}).run(conn).then(function(cursor) {
+                r.table(config.users).changes({includeInitial: true}).run(conn).then(function(cursor) {
                     cursor.each(function(error, row) {
-                        console.log("Found filter");
-                        model.listenFilter( row.new_val.filter, callback );
+                        var filters = row.new_val.filters;
+                        var userID = row.new_val.id;
+                        for(var i = 0; i < filters.length; i++){
+                            console.log("Found filter");
+                            model.listenFilter( userID, filters[i], callback );
+                        }
                     });
                 });
             }).error(calls.throwError);
@@ -75,22 +79,56 @@ r.connect(config.database).then(function(conn) {
 });
 };
 
-model.addFilter = function (wikipostFilter) {
+model.addFilter = function (userID, wikipostFilter) {
 r.connect(config.database).then(function(conn) {
-    r.table(config.filters).insert({filter: wikipostFilter}).run(conn).then(calls.printOK).error(calls.throwError);
+    r.table(config.users).get(userID).update({'filters': r.row('filters').append(wikipostFilter)} )
+    .run(conn).then(calls.printOK).error(calls.throwError);
 }).error(calls.noFun);
 };
 
-model.listenFilter = function (wikipostFilter, callback) {
+model.listenFilter = function (userID, wikipostFilter, callback) {
 r.connect(config.database).then(function(conn) {
     r.table(TABLE).filter( wikipostFilter ).changes().run(conn).then(function(cursor) {
        cursor.each(function(error, row) {
-           callback(false, row);
+           callback(false, userID, row);
        });
     }).error(function(error) {
         callback(true, error);
     });
 }).error(function(error) {
     callback(false, error);
+});
+};
+
+model.getUserByID = function (userID, callback) {
+r.connect(config.database).then(function(conn) {
+    r.table(config.users).get(userID).run(conn).then(function(user) {
+		callback(null, user);
+    }).error(function(error) {
+        callback(error);
+    });
+}).error(function(error) {
+    callback(error);
+});
+};
+
+model.getUserByCredentials = function (username, password, callback) {
+r.connect(config.database).then(function(conn) {
+    r.table(config.users).filter(
+        r.row('username').eq(username).and(r.row('password').eq(password))
+    ).limit(1).run(conn).then(function(cursor) {
+		 cursor.toArray(function(err, results) {
+            if(results.length > 0){
+                callback(false, results[0]);
+            }
+            else{
+                callback(false, null);
+            }
+        });
+    }).error(function(error) {
+        callback(error);
+    });
+}).error(function(error) {
+    callback(error);
 });
 };

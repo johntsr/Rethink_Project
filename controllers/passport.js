@@ -1,20 +1,6 @@
 // load all the things we need
 var LocalStrategy   = require('passport-local').Strategy;
-
-// load up the user model
-var user = {
-    username: 'test-user',
-    password: 'test-password',
-    id: 1
-};
-
-function findUser (username, callback) {
-	if (username === user.username) {
-		return callback(null, user);
-	}
-	return callback(null);
-}
-
+var db = require('../models/wikipostDB');
 
 // expose this function to our app using module.exports
 module.exports = function(passport) {
@@ -27,12 +13,12 @@ module.exports = function(passport) {
 
     // used to serialize the user for the session
     passport.serializeUser(function(user, done) {
-        done(null, user.username);
+        done(null, user.id);
     });
 
     // used to deserialize the user
-    passport.deserializeUser(function(username, done) {
-        findUser(username, done);
+    passport.deserializeUser(function(userID, done) {
+		db.getUserByID(userID, done);
     });
 
 
@@ -45,32 +31,16 @@ module.exports = function(passport) {
     passport.use('local-login', new LocalStrategy({
 	    passReqToCallback: true
 	},
-    // function(username, password, done) { // callback with email and password from our form
-    function(req, username, password, done) { // callback with email and password from our form
-        findUser(username, function (err, user) {
-			console.log("Got in!");
+    function(req, username, password, done) {
+        db.getUserByCredentials(username, password, function (err, user) {
 			if (err) {
-				// req.flash('message', 'Internal error');
-				console.log("err!");
 				return done(err);
+			}
 
-			}
 			if (!user) {
-				// req.flash('message', 'Wrong username');
-				// return done(null, false);
-				console.log("name");
-				return done(null, false, req.flash('message', "Wrong username"));
-				// return done(null, false, {message: 'Wrong username'});
+				return done(null, false, req.flash('message', "Wrong credentials"));
 			}
-			if (password !== user.password) {
-				// req.flash('message', 'Wrong password');
-				// return done(null, false);
-				console.log("password");
-				// return done(null, false, {message: 'Wrong password'});
-				return done(null, false, req.flash('message', 'Wrong password'));
-			}
-			// req.flash('message', null);
-				console.log("OK");
+
 			return done(null, user);
     	});
     }));
