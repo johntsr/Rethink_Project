@@ -11,6 +11,7 @@ var passport = require('passport');
 var config = require('./config');
 var model = require('./models/wikipostDB');
 var calls = require('./models/callbacks');
+var flash = require('connect-flash');
 
 require('./controllers/passport')(passport);
 
@@ -22,12 +23,8 @@ app.use(bodyParser.urlencoded({
 app.use(express.static(path.join(__dirname, 'views')));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(logger({
-    path: 'logs.txt'
-}));
-
 app.use(session({
-    secret: 'ilovescotchscotchyscotchscotch',
+    secret: 'SpanoulisFTW',
     resave: true,
     saveUninitialized: true
 }));
@@ -35,6 +32,9 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(cookieParser());
+
+app.use(flash());
+app.set('view engine', 'ejs');
 
 var routes = require('./controllers/index')(app, passport);
 

@@ -6,19 +6,19 @@ var path = require('path');
 module.exports = function (app, passport) {
 
 	app.get('/', function (req, res) {
-        console.log("GET: <<root>>");
 		res.redirect('/login');
-		// res.redirect('http://stackoverflow.com/');
 	});
 
 	app.get('/login', function (req, res) {
-        console.log("GET: login");
-		res.sendFile( path.resolve('views/login.html') );
+		// res.sendFile( path.resolve('views/login.html') );
+		res.render(path.resolve('views/login'), {
+        message: req.flash('message')
+    	} );
 	});
 
 	app.post('/login', passport.authenticate('local-login', {
 		successRedirect : '/profile',	// redirect to the secure profile section
-		failureRedirect : '/login', 		// redirect back to the signup page if there is an error
+		failureRedirect : '/login', 	// redirect back to the signup page if there is an error
         failureFlash: true
         }));
 
@@ -28,7 +28,6 @@ module.exports = function (app, passport) {
 	});
 
 	app.get('/profile', isLoggedIn, function (req, res) {
-        console.log('GET: profile');
 		res.sendFile( path.resolve('views/profile.html') );
 	});
 

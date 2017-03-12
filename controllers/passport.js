@@ -1,11 +1,5 @@
-// config/passport.js
-
 // load all the things we need
 var LocalStrategy   = require('passport-local').Strategy;
-
-
-// var User       		= require('../models/user');
-
 
 // load up the user model
 var user = {
@@ -15,10 +9,10 @@ var user = {
 };
 
 function findUser (username, callback) {
-  if (username === user.username) {
-    return callback(null, user);
-  }
-  return callback(null);
+	if (username === user.username) {
+		return callback(null, user);
+	}
+	return callback(null);
 }
 
 
@@ -33,15 +27,11 @@ module.exports = function(passport) {
 
     // used to serialize the user for the session
     passport.serializeUser(function(user, done) {
-        // done(null, user.id);
         done(null, user.username);
     });
 
     // used to deserialize the user
     passport.deserializeUser(function(username, done) {
-        // User.findById(id, function(err, user) {
-        //     done(err, user);
-        // });
         findUser(username, done);
     });
 
@@ -52,22 +42,37 @@ module.exports = function(passport) {
     // we are using named strategies since we have one for login and one for signup
     // by default, if there was no name, it would just be called 'local'
 
-    passport.use('local-login', new LocalStrategy(
-    function(username, password, done) { // callback with email and password from our form
+    passport.use('local-login', new LocalStrategy({
+	    passReqToCallback: true
+	},
+    // function(username, password, done) { // callback with email and password from our form
+    function(req, username, password, done) { // callback with email and password from our form
+        findUser(username, function (err, user) {
+			console.log("Got in!");
+			if (err) {
+				// req.flash('message', 'Internal error');
+				console.log("err!");
+				return done(err);
 
-            findUser(username, function (err, user) {
-              if (err) {
-                return done(err);
-              }
-              if (!user) {
-                return done(null, false);
-              }
-              if (password !== user.password  ) {
-                return done(null, false);
-              }
-              return done(null, user);
-        });
-
+			}
+			if (!user) {
+				// req.flash('message', 'Wrong username');
+				// return done(null, false);
+				console.log("name");
+				return done(null, false, req.flash('message', "Wrong username"));
+				// return done(null, false, {message: 'Wrong username'});
+			}
+			if (password !== user.password) {
+				// req.flash('message', 'Wrong password');
+				// return done(null, false);
+				console.log("password");
+				// return done(null, false, {message: 'Wrong password'});
+				return done(null, false, req.flash('message', 'Wrong password'));
+			}
+			// req.flash('message', null);
+				console.log("OK");
+			return done(null, user);
+    	});
     }));
 
 };

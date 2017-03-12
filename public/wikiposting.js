@@ -16,7 +16,7 @@ function hidePost(id){
 function propagateDelete(id){
     $.ajax({
         type: 'DELETE',
-        url: '/wikipost/delete/' + id
+        url: '/profile/wikipost/delete/' + id
     });
 }
 
@@ -37,7 +37,7 @@ function addWikiPost(originalTemplates, wikipost){
 function getTemplatesAsync(templContainer){
 	$.ajax({
         type: 'GET',
-        url: '/templates',
+        url: '/profile/templates',
         success: function(data) {
             templates = $.parseHTML(data);
         }
@@ -47,7 +47,7 @@ function getTemplatesAsync(templContainer){
 function getWikiPostsAsync(){
     $.ajax({
         type: 'GET',
-        url: '/getwikiposts',
+        url: '/profile/getwikiposts',
         success: function(data) {
             var wikiposts = JSON.parse(data);
             for (var i = 0; i < wikiposts.length; i++) {
@@ -61,7 +61,7 @@ function getFieldsInfoAsync(){
     $.getScript("fieldparser.js", function(){
         $.ajax({
             type: 'GET',
-            url: '/fieldsInfo',
+            url: '/profile/fieldsInfo',
             success: function(data) {
                 var fields = JSON.parse(data);
                 for(var i = 0; i < fields.length; i++){
@@ -107,7 +107,7 @@ $(document).ready(function () {
             data.triggerError('The title is required');
         }
         sendData.add({"title": t});
-        sendData.send('/addwikipost');
+        sendData.send('/profile/addwikipost');
     });
 
     $('#filter_form').on('submit', function (event) {
@@ -117,10 +117,11 @@ $(document).ready(function () {
             fieldParsers[i].storeData(sendData);
         }
         // console.log(sendData.toString());
-        sendData.send('/addfilter');
+        sendData.send('/profile/addfilter');
     });
 
     $('#filterstuff').hide();
+
     $('#hideshowfilter').click(function(){
         $('#filterstuff').toggle("fast");
     });
