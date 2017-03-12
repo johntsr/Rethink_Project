@@ -9,6 +9,7 @@ module.exports = {
 
   table: "Wiki",
   users: "Users",
+  broadcast: 'Broadcast',
 
   port: process.env.APP_PORT || 3000
 };
