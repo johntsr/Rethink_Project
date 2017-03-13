@@ -65,7 +65,7 @@ module.exports = function (app, passport) {
         db.getFilters(req.user.id, table, function (results) {
             var titles = [];
             for (var i = 0; i < results.length; i++) {
-                titles.push(results[i].id);
+                titles.push(results[i].filterTitle);
             }
             res.send( JSON.stringify(titles) );
         });
@@ -83,9 +83,7 @@ module.exports = function (app, passport) {
     });
 
 	app.delete('/profile/wikipost/delete/:id', isLoggedIn, function(req,res){
-
 		var id = req.params.id;
-
 		db.deletePost(id, function (success, result) {
             if (success) res.json({
                 status: 'OK'

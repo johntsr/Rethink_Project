@@ -4,20 +4,15 @@ var fieldParsers = [];
 var filterTitles = [];
 
 function deletePost(id) {
-    hidePost(id);
-    propagateDelete(id);
-    fixListIndexes();
-}
-
-function hidePost(id){
-    $('#' + id).remove();
-}
-
-function propagateDelete(id){
     $.ajax({
         type: 'DELETE',
         url: '/profile/wikipost/delete/' + id
     });
+}
+
+function hidePost(id){
+    $('#' + id).remove();
+    fixListIndexes();
 }
 
 function fixListIndexes(){
@@ -37,6 +32,7 @@ function addWikiPost(originalTemplates, wikipost, filterTitle){
 	var content = { attrs: { id: wikipost.id }, text: { '.filter_title': filterTitle, '.message': wikipost.comment, '.user': wikipost.user, '.title': wikipost.title, '.position': index}};
 	var wikiPostTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
     $("#wikiposts").prepend( $(wikiPostTemplate) );
+    fixListIndexes();
 }
 
 function getTemplatesAsync(){
@@ -59,23 +55,41 @@ function getIDAsync(){
         url: '/profile/id',
         success: function(data) {
             ID = JSON.parse(data).id;
-            socket.on('new_' + ID, function(wikipostInfo) {
+            socket.on('newWiki_' + ID, function(wikipostInfo) {
                 addWikiPost(templates, wikipostInfo.wikiData, wikipostInfo.filterTitle);
-                fixListIndexes();
         	});
 
-        	socket.on('delete_' + ID, function(wikipost) {
-                hidePost(wikipost.id);
+        	socket.on('deleteWiki_' + ID, function(wikipost) {
+                hidePost(wikipost.wikiData.id);
             });
 
-        	socket.on('update_' + ID, function(wikipostInfo) {
+        	socket.on('updateWiki_' + ID, function(wikipostInfo) {
         		addWikiPost(templates, wikipostInfo.wikiData, wikipostInfo.filterTitle);
-                fixListIndexes();
+            });
+
+            socket.on('newFilter_' + ID, function(data) {
+                addFilter(templates, data.filterTitle);
+        	});
+
+        	socket.on('deleteFilter_' + ID, function(data) {
+                hideFilter(data.filterTitle);
             });
 
             getFiltersAsync(templates);
         }
     });
+}
+
+function noWhiteSpace(str){
+    return str.replace(/\s/g, "_");
+}
+
+function addFilter(originalTemplates, filterTitle){
+    var title = noWhiteSpace(filterTitle);
+    var loadSelector = 'li.currentFilter';
+    var content = { attrs: { id: title }, text: { '.filter_title': filterTitle} };
+    var currentFilterTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
+    $("#currentFilters").append( $(currentFilterTemplate) );
 }
 
 function getFiltersAsync(originalTemplates){
@@ -86,13 +100,25 @@ function getFiltersAsync(originalTemplates){
         success: function(data) {
             filterTitles = JSON.parse(data);
             for(var i = 0; i < filterTitles.length; i++){
-                var title = filterTitles[i].replace(/\s/g, "_");
-                var loadSelector = 'li.currentFilter';
-                var index = i;
-            	var content = { attrs: { id: title }, text: { '.filter_title': filterTitles[i]} };
-            	var currentFilterTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
-                $("#currentFilters").append( $(currentFilterTemplate) );
+                addFilter(originalTemplates, filterTitles[i]);
             }
+        }
+    });
+}
+
+function hideFilter(filterTitle){
+    var titleID = noWhiteSpace(filterTitle);
+    $('#' + titleID).remove();
+}
+
+
+function deleteFilter(filterTitle){
+    $.ajax({
+        type: 'DELETE',
+        url: '/profile/filters/delete/',
+        data: {
+            table: "Wiki",
+            title: filterTitle
         }
     });
 }
@@ -106,7 +132,6 @@ function getWikiPostsAsync(){
             for (var i = 0; i < wikiposts.length; i++) {
                 addWikiPost(templates, wikiposts[i]);
             }
-            fixListIndexes();
         }
     });
 }
@@ -182,16 +207,7 @@ $(document).ready(function () {
 
     $('#currentFilters').on('click', '.deleteFilter', function (e) {
         var index = $(this).index() - 1;
-        var id = $(this).parent('li')[0].id;
-        $('#' + id).remove();
-        $.ajax({
-            type: 'DELETE',
-            url: '/profile/filters/delete/',
-            data: {
-                table: "Wiki",
-                title: filterTitles[index]
-			}
-        });
+        deleteFilter(filterTitles[index]);
     });
 
     $('#filterstuff').hide(0);

@@ -12,13 +12,13 @@ function WikiBroadcast(_filterInfoData, _wikiPostChange){
 	this.data.id = [];
 
 	if ((_wikiPostChange.new_val !== null) && (_wikiPostChange.old_val !== null)) {           // update
-		this.data.emit = 'update_';
+		this.data.emit = 'updateWiki_';
 		this.data.broadcastData = _wikiPostChange.new_val;
 	} else if ((_wikiPostChange.new_val !== null) && (_wikiPostChange.old_val === null)) {    // new wikipost
-		this.data.emit = 'new_';
+		this.data.emit = 'newWiki_';
 		this.data.broadcastData = _wikiPostChange.new_val;
 	} else if ((_wikiPostChange.new_val === null) && (_wikiPostChange.old_val !== null)) {    // deleted wikipost
-		this.data.emit = 'delete_';
+		this.data.emit = 'deleteWiki_';
 		this.data.broadcastData = _wikiPostChange.old_val;
 	}
 	this.data.id = [_filterInfoData.userID, this.data.broadcastData.id];
@@ -29,7 +29,7 @@ WikiBroadcast.prototype.getData = function(){
 };
 
 
-model.setup = function (io, callback) {
+model.setup = function (io) {
     console.log("Setting up RethinkDB...");
 
     r.connect(config.database).then(function(conn) {
@@ -56,17 +56,28 @@ model.setup = function (io, callback) {
                     r.table(config.filters).run(conn).then(function(cursor) {
                         cursor.toArray(function(error, filters) {
                             for(var i = 0; i < filters.length; i++){
-                                model.listenFilter( filters[i], callback );
+                                model.listenFilter( filters[i] );
                             }
                         });
                     });
 
                     r.table(config.filters).changes().run(conn).then(function(cursor) {
                         cursor.each(function(error, row) {
-							var filter = row.new_val;
-                            if(filter){
-	                            model.listenFilter( filter, callback );
+							var filterInfoData = row.new_val;
+							var userID;
+							var _title;
+                            if(filterInfoData){
+	                            model.listenFilter(filterInfoData);
+								userID = filterInfoData.userID;
+								_title = filterInfoData.filterTitle;
+								io.emit('newFilter_' + userID, {filterTitle: _title});
                             }
+							else{
+								filterInfoData = row.old_val;
+								userID = filterInfoData.userID;
+								_title = filterInfoData.filterTitle;
+								io.emit('deleteFilter_' + userID, {filterTitle: _title});
+							}
                         });
                     });
 
@@ -123,13 +134,15 @@ model.addFilter = function (filterInfo, callback) {
         r.table(config.filters).filter(
 			r.row('userID').eq(filterInfo.userID())
 			.and(r.row('table').eq(filterInfo.table()))
-			.and( r.row('query').eq(filterInfo.query()) )
+			.and( r.row('query').eq(filterInfo.query())
+					.or(r.row('filterTitle').eq(filterInfo.filterTitle()) )
+				)
 		).isEmpty()
 		.run(conn).then(
 			function(empty){
 				if( empty ){
 					r.table(config.filters).insert({
-						id: filterInfo.filterTitle(),
+						filterTitle: filterInfo.filterTitle(),
 						query: filterInfo.query(),
 						table: filterInfo.table(),
 						userID: filterInfo.userID(),
@@ -147,9 +160,11 @@ model.addFilter = function (filterInfo, callback) {
 };
 
 model.deleteFilter = function (userID, table, filterTitle, callback) {
+	console.log(table);
+	console.log(filterTitle);
     r.connect(config.database).then(function(conn) {
 		r.table(config.filters).filter(
-			r.row('id').eq(filterTitle)
+			r.row('filterTitle').eq(filterTitle)
 			.and(r.row('userID').eq(userID))
 			.and(r.row('table').eq(table))
 		).delete()
@@ -171,14 +186,28 @@ model.getFilters = function (userID, table, callback) {
     }).error(calls.noFun);
 };
 
-model.listenFilter = function (filterInfoData, callback) {
+model.listenFilter = function (filterInfoData) {
     r.connect(config.database).then(function(conn) {
+		r.table(config.filters).filter(
+			r.row('userID').eq(filterInfoData.userID)
+			.and(r.row('table').eq(filterInfoData.table))
+			.and( r.row('query').eq(filterInfoData.query)
+					.or(r.row('filterTitle').eq(filterInfoData.filterTitle) )
+				)
+		).changes().isEmpty()
+		.run(conn).then(
+			function(empty){
+				if(empty){
+					conn.close();
+				}
+			});
         r.table(filterInfoData.table).filter( filterInfoData.query ).changes().run(conn).then(function(cursor) {
            cursor.each(function(error, rowChange) {
-               model.prepareBroadcast(new WikiBroadcast(filterInfoData, rowChange) );
-           });
-        }).error(calls.noFun);
-    }).error(calls.noFun);
+			   	model.prepareBroadcast(new WikiBroadcast(filterInfoData, rowChange) );
+			});
+    	}).error(calls.noFun);
+	})
+	.error(calls.noFun);
 };
 
 model.prepareBroadcast = function (wikiBroadcast) {
