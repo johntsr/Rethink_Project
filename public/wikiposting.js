@@ -1,6 +1,7 @@
 var templates;
 var ID;
 var fieldParsers = [];
+var filterTitles = [];
 
 function deletePost(id) {
     hidePost(id);
@@ -38,7 +39,21 @@ function addWikiPost(originalTemplates, wikipost, filterTitle){
     $("#wikiposts").prepend( $(wikiPostTemplate) );
 }
 
-function getIDAsync(socket){
+function getTemplatesAsync(){
+	$.ajax({
+        type: 'GET',
+        url: '/profile/templates',
+        success: function(data) {
+            templates = $.parseHTML(data);
+            getIDAsync();
+            getWikiPostsAsync();
+            getFieldsInfoAsync();
+        }
+    });
+}
+
+function getIDAsync(){
+    var socket = io();
     $.ajax({
         type: 'GET',
         url: '/profile/id',
@@ -57,16 +72,26 @@ function getIDAsync(socket){
         		addWikiPost(templates, wikipostInfo.wikiData, wikipostInfo.filterTitle);
                 fixListIndexes();
             });
+
+            getFiltersAsync(templates);
         }
     });
 }
 
-function getTemplatesAsync(templContainer){
-	$.ajax({
+function getFiltersAsync(originalTemplates){
+    $.ajax({
         type: 'GET',
-        url: '/profile/templates',
+        url: '/profile/getfilters',
         success: function(data) {
-            templates = $.parseHTML(data);
+            filterTitles = JSON.parse(data);
+            for(var i = 0; i < filterTitles.length; i++){
+                var title = filterTitles[i].replace(/\s/g, "_");
+                var loadSelector = 'li.currentFilter';
+                var index = i;
+            	var content = { attrs: { id: title }, text: { '.filter_title': filterTitles[i]} };
+            	var currentFilterTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
+                $("#currentFilters").append( $(currentFilterTemplate) );
+            }
         }
     });
 }
@@ -105,10 +130,7 @@ function getFieldsInfoAsync(){
 $(document).ready(function () {
     var socket = io();
 
-    getIDAsync(socket);
-	getTemplatesAsync();
-    getWikiPostsAsync();
-    getFieldsInfoAsync();
+    getTemplatesAsync();
 
     $('#wikiposts').on('click', '.deletePost', function (e) {
         var postID = $(this).parent('li')[0].id;
@@ -154,6 +176,16 @@ $(document).ready(function () {
                 var milliseconds = 3000;
                 setTimeout(function(){ $('#filterResponse').text(""); }, milliseconds);
             });
+    });
+
+    $('#currentFilters').on('click', '.deleteFilter', function (e) {
+        var index = $(this).index() - 1;
+        var id = $(this).parent('li')[0].id;
+        $('#' + id).remove();
+        $.ajax({
+            type: 'DELETE',
+            url: '/profile/filters/delete/' + filterTitles[index]
+        });
     });
 
     $('#filterstuff').hide(0);

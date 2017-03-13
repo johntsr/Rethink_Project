@@ -7,7 +7,7 @@ module.exports = {
   	password: "SKATEBOARD"
   },
 
-  table: "Wiki",
+  wiki: "Wiki",
   users: "Users",
   broadcast: 'Broadcast',
 

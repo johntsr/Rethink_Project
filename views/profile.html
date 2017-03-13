@@ -17,9 +17,14 @@
 		</form>
 
 
-		<h1>Filters</h1>
-        <button id='hideshowfilter'>Hide/Show filters</button>
+		<h1>Filter Administration</h1>
+        <button id='hideshowfilter'>Hide/Show filter panel</button>
         <div id="filterstuff">
+
+            <h2>Current Filters</h2>
+            <ul id="currentFilters"></ul>
+
+            <h2>Filter Creation Panel</h2>
             <ul id="createFilters"> </ul>
             <form id='filter_form' method='post'>
 	            <input type='text' id='filter_title' placeholder='Title of the filter' />

@@ -60,6 +60,18 @@ module.exports = function (app, passport) {
         });
     });
 
+    app.get('/profile/getfilters', isLoggedIn, function (req, res) {
+        db.getUserByID(req.user.id, function (err, user) {
+            var titles = [];
+            var filters = user.filters;
+            for (var i = 0; i < filters.length; i++) {
+                titles.push(filters[i].filterTitle);
+            }
+            res.send( JSON.stringify(titles) );
+        });
+    });
+
+
 	app.get('/profile/templates', isLoggedIn, function (req, res) {
         res.sendFile( path.resolve('views/templates.html') );
     });
@@ -85,6 +97,16 @@ module.exports = function (app, passport) {
         });
 	});
 
+    app.delete('/profile/filters/delete/:filterTitle', isLoggedIn, function(req,res){
+		db.deleteFilter(req.user.id, req.params.filterTitle, function (success, result) {
+            if (success) res.json({
+                status: 'OK'
+            });
+            else res.json({
+                status: 'Error'
+            });
+        });
+	});
 };
 
 function isLoggedIn(req, res, next) {
