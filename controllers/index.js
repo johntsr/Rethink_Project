@@ -35,15 +35,10 @@ module.exports = function (app, passport) {
 	});
 
     app.post('/profile/addwikipost', isLoggedIn, function (req, res) {
-
         var wikipost = new wiki.WikiPost();
-        wikipost.setProp("title", req.body.userData[0].title);
+        wikipost.setProp("title", req.body.userData.title);
 
-        console.log( wikipost.getProp("title") );
-
-        var data = wikipost.getData();
-
-        db.savePost(data, function (success, result) {
+        db.savePost(wikipost.getData(), function (success, result) {
             if (success) res.json({
                 status: 'OK'
             });
@@ -70,8 +65,6 @@ module.exports = function (app, passport) {
     });
 
 	app.post('/profile/addfilter', isLoggedIn, function (req, res) {
-        console.log(filters.createFilter(req.body.userData));
-		console.log(req.user.id);
 		db.addFilter(req.user.id, filters.createFilter(req.body.userData),
         function(_success){
             res.send( JSON.stringify({success: _success}) );

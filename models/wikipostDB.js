@@ -5,6 +5,31 @@ var config = require('../config');
 
 var TABLE = config.table;
 
+function WikiBroadcast(_userID, _filterInfoData, _wikiPostChange){
+	this.data = {};
+	this.data.filterInfoData = _filterInfoData;
+	this.data.emit = '';
+	this.data.broadcastData = {};
+	this.data.id = [];
+
+	if ((_wikiPostChange.new_val !== null) && (_wikiPostChange.old_val !== null)) {           // update
+		this.data.emit = 'update_';
+		this.data.broadcastData = _wikiPostChange.new_val;
+	} else if ((_wikiPostChange.new_val !== null) && (_wikiPostChange.old_val === null)) {    // new wikipost
+		this.data.emit = 'new_';
+		this.data.broadcastData = _wikiPostChange.new_val;
+	} else if ((_wikiPostChange.new_val === null) && (_wikiPostChange.old_val !== null)) {    // deleted wikipost
+		this.data.emit = 'delete_';
+		this.data.broadcastData = _wikiPostChange.old_val;
+	}
+	this.data.id = [_userID, this.data.broadcastData.id];
+}
+
+WikiBroadcast.prototype.getData = function(){
+	return this.data;
+};
+
+
 model.setup = function (io, callback) {
     console.log("Setting up RethinkDB...");
 
@@ -34,7 +59,8 @@ model.setup = function (io, callback) {
                             for(var user = 0; user < results.length; user++){
                                 var filters = results[user].filters;
                                 var userID = results[user].id;
-                                for(var i = 0; i < filters.length; i++){
+								for(var i = 0; i < filters.length; i++){
+                                console.log("Found filter");
                                     model.listenFilter( userID, filters[i], callback );
                                 }
                             }
@@ -46,7 +72,7 @@ model.setup = function (io, callback) {
                             var filters = row.new_val.filters;
                             var userID = row.new_val.id;
                             for(var i = 0; i < filters.length; i++){
-                                console.log("Found filter");
+                                console.log("New filter");
                                 model.listenFilter( userID, filters[i], callback );
                             }
                         });
@@ -54,9 +80,15 @@ model.setup = function (io, callback) {
 
                     r.table(config.broadcast).changes({squash: 1.0}).run(conn).then(function(cursor) {
                         cursor.each(function(error, row) {
-                            if(row.new_val){
-                                io.emit(row.new_val.toEmit + row.new_val.id[0], row.new_val.broadData);
-                                r.table(config.broadcast).get(row.new_val.id).delete().run(conn);
+							var wikiBroadcastData = row.new_val;
+                            if(wikiBroadcastData){
+								console.log(wikiBroadcastData);
+
+								var data = {filterTitle: wikiBroadcastData.filterInfoData.filterTitle,
+											wikiData: wikiBroadcastData.broadcastData};
+								// NOTE: id[0]!
+                                io.emit(wikiBroadcastData.emit + wikiBroadcastData.id[0], data);
+                                r.table(config.broadcast).get(wikiBroadcastData.id).delete().run(conn);
                             }
                         });
                     });
@@ -80,14 +112,8 @@ model.getPosts = function (callback) {
 
 model.savePost = function (wikipost, callback) {
     r.connect(config.database).then(function(conn) {
-    r.table(TABLE).insert(wikipost).run(conn).then(function(results) {
-        callback(true, results);
-    }).error(function(error) {
-        callback(false, error);
-    });
-    }).error(function(error) {
-        callback(false, error);
-    });
+    r.table(TABLE).insert(wikipost).run(conn).then(calls.NoFun).error(calls.NoFun);
+    }).error(calls.NoFun);
 };
 
 model.deletePost = function (wikipost, callback) {
@@ -102,18 +128,18 @@ model.deletePost = function (wikipost, callback) {
 });
 };
 
-
 // TODO
-model.addFilter = function (userID, wikipostFilter, callback) {
+model.addFilter = function (userID, filterInfo, callback) {
     r.connect(config.database).then(function(conn) {
         r.table(config.users).get(userID).update(
 			function(user){
   				return r.branch(
 		            user('filters').contains(
 		            	function(filterRecord) {
-    				 		return filterRecord('filter').eq(wikipostFilter);
+    				 		return filterRecord('filterTitle').eq( filterInfo.filterTitle() )
+									.or(filterRecord('query').eq( filterInfo.query() ));
    						}).not(),
-		            {'filters': user('filters').append({table: TABLE, filter: wikipostFilter})},
+		            {'filters': user('filters').append( filterInfo.setTable(TABLE).getData() )},
 		            null
 	  			);
   			}, {returnChanges: true} )
@@ -125,26 +151,20 @@ model.addFilter = function (userID, wikipostFilter, callback) {
     }).error(calls.noFun);
 };
 
-model.listenFilter = function (userID, wikipostFilter, callback) {
+model.listenFilter = function (userID, filterInfoData, callback) {
     r.connect(config.database).then(function(conn) {
-        r.table(wikipostFilter.table).filter( wikipostFilter.filter ).changes().run(conn).then(function(cursor) {
-           cursor.each(function(error, row) {
-               callback(false, userID, row);
+        r.table(filterInfoData.table).filter( filterInfoData.query ).changes().run(conn).then(function(cursor) {
+           cursor.each(function(error, rowChange) {
+               model.prepareBroadcast(new WikiBroadcast(userID, filterInfoData, rowChange) );
            });
-        }).error(function(error) {
-            callback(true, error);
-        });
-    }).error(function(error) {
-        callback(false, error);
-    });
+        }).error(calls.noFun);
+    }).error(calls.noFun);
 };
 
-model.prepareBroadcast = function (_toEmit, _userID, _broadData) {
+model.prepareBroadcast = function (wikiBroadcast) {
     r.connect(config.database).then(function(conn) {
-        r.table(config.broadcast).insert({ id:[_userID, _broadData.id], toEmit: _toEmit, broadData: _broadData}).run(conn);
-    }).error(function(error) {
-        callback(false, error);
-    });
+        r.table(config.broadcast).insert(wikiBroadcast.getData()).run(conn);
+    }).error(calls.noFun);
 };
 
 model.getUserByID = function (userID, callback) {

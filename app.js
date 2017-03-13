@@ -41,20 +41,5 @@ var routes = require('./controllers/index')(app, passport);
 
 server.listen(config.port, function() {
     console.log('Server up and listening on port %d', config.port);
-    model.setup(io, function(error, userID, data) {
-        console.log("Gotcha!");
-        var toEmit = '';
-        var broadData;
-        if ((data.new_val !== null) && (data.old_val !== null)) {           // update
-            toEmit = 'update_';
-            broadData = data.new_val;
-        } else if ((data.new_val !== null) && (data.old_val === null)) {    // new wikipost
-            toEmit = 'new_';
-            broadData = data.new_val;
-        } else if ((data.new_val === null) && (data.old_val !== null)) {    // deleted wikipost
-            toEmit = 'delete_';
-            broadData = data.old_val;
-        }
-        model.prepareBroadcast(toEmit, userID, broadData);
-    });
+    model.setup(io);
 });

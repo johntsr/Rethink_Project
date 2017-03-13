@@ -2,10 +2,8 @@
 /* jshint node: true */
 'use strict';
 
-
 var model = module.exports;
 var config = require("../config.js");
-// var filterparser = require("./filterparser.js");
 
 var WikiPostProps = [	"bot", "comment", "namespace", "server_name", "timestamp",
  						"title", "type", "user", "wiki"];

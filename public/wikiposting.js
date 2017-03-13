@@ -26,10 +26,14 @@ function fixListIndexes(){
     });
 }
 
-function addWikiPost(originalTemplates, wikipost){
+function addWikiPost(originalTemplates, wikipost, filterTitle){
+    if(!filterTitle){
+        filterTitle = '';
+    }
+
     var loadSelector = 'li.wikipost';
     var index = 1;
-	var content = { attrs: { id: wikipost.id }, text: { '.message': wikipost.comment, '.user': wikipost.user, '.title': wikipost.title, '.position': index}};
+	var content = { attrs: { id: wikipost.id }, text: { '.filter_title': filterTitle, '.message': wikipost.comment, '.user': wikipost.user, '.title': wikipost.title, '.position': index}};
 	var wikiPostTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
     $("#wikiposts").prepend( $(wikiPostTemplate) );
 }
@@ -40,8 +44,8 @@ function getIDAsync(socket){
         url: '/profile/id',
         success: function(data) {
             ID = JSON.parse(data).id;
-            socket.on('new_' + ID, function(wikipost) {
-                addWikiPost(templates, wikipost);
+            socket.on('new_' + ID, function(wikipostInfo) {
+                addWikiPost(templates, wikipostInfo.wikiData, wikipostInfo.filterTitle);
                 fixListIndexes();
         	});
 
@@ -49,8 +53,8 @@ function getIDAsync(socket){
                 hidePost(wikipost.id);
             });
 
-        	socket.on('update_' + ID, function(wikipost) {
-        		addWikiPost(templates, wikipost);
+        	socket.on('update_' + ID, function(wikipostInfo) {
+        		addWikiPost(templates, wikipostInfo.wikiData, wikipostInfo.filterTitle);
                 fixListIndexes();
             });
         }
@@ -115,20 +119,29 @@ $(document).ready(function () {
         event.preventDefault();
         var sendData = new SendServerData();
 
-        var t = $('#wiki_post_title').val();
-        if(!t || t.trim().length === 0) {
-            data.triggerError('The title is required');
+        var title = $('#wiki_post_title').val();
+        if(!title || title.trim().length === 0) {
+            sendData.triggerError('The title is required');
         }
-        sendData.add({"title": t});
+        sendData.add("title", title);
         sendData.send('/profile/addwikipost');
     });
 
     $('#filter_form').on('submit', function (event) {
         event.preventDefault();
         var sendData = new SendServerData();
-        for (var i = 0; i < fieldParsers.length; i++) {
-            fieldParsers[i].storeData(sendData);
+
+        var title = $('#filter_title').val();
+        if(!title || title.trim().length === 0) {
+            sendData.triggerError('The title is required');
         }
+        sendData.add("filterTitle", title);
+
+        for (var i = 0; i < fieldParsers.length; i++) {
+            fieldParsers[i].pushData(sendData);
+        }
+
+        // console.log(sendData.toString());
         sendData.send('/profile/addfilter',
             function afterAddition(data){
                 var success = JSON.parse(data).success;

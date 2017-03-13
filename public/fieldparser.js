@@ -1,5 +1,5 @@
 function SendServerData(){
-	this.data = [];
+	this.data = {};
 	this.errorInfo = { error: { triggered: false, description: ""} };
 }
 
@@ -20,9 +20,18 @@ SendServerData.prototype.error = function(){
 	return this.errorInfo.triggered;
 };
 
-SendServerData.prototype.add = function(newData){
+SendServerData.prototype.add = function(newLabel, newData){
 	if( !this.error() ){
-		this.data.push(newData);
+		this.data[newLabel] = newData;
+	}
+};
+
+SendServerData.prototype.push = function(label, newData){
+	if( !this.error() ){
+		if(!this.data[label]){
+			this.data[label] = [];
+		}
+		this.data[label].push(newData);
 	}
 };
 
@@ -87,6 +96,15 @@ TypeField.prototype.storeName = function(myData){
 	myData.name = this.fieldName();
 };
 
+TypeField.prototype.filterTag = function(){
+	return "filterOptions";
+};
+
+TypeField.prototype.storeFilterData = function(data, myData){
+	data.push(this.filterTag(), myData);
+};
+
+
 function createFieldParser(field){
 	switch ( field.type ) {
 		case "boolean": return new BoolField(field);
@@ -105,13 +123,13 @@ function BoolField (field){
 BoolField.prototype = Object.create(TypeField.prototype);
 BoolField.prototype.constructor = BoolField;
 
-BoolField.prototype.storeData = function(data){
+BoolField.prototype.pushData = function(data){
 	var checked = $('#' + this.fieldName() + " .choiceBtn").is(":checked");
 	if( !checked ){
 		var myData = {};
 		this.storeName(myData);
 		myData.value = checked;
-		data.add(myData);
+		this.storeFilterData(data, myData);
 	}
 };
 
@@ -132,7 +150,7 @@ function MultipleField (field){
 MultipleField.prototype = Object.create(TypeField.prototype);
 MultipleField.prototype.constructor = MultipleField;
 
-MultipleField.prototype.storeData = function(data){
+MultipleField.prototype.pushData = function(data){
 	var myData = {};
 	this.storeName(myData);
 	myData.value = {};
@@ -150,7 +168,7 @@ MultipleField.prototype.storeData = function(data){
 		data.triggerError("In field <<" + this.fieldName() + ">>, at least 1 option must be selected!");
 	}
 
-	data.add(myData);
+	this.storeFilterData(data, myData);
 };
 
 MultipleField.prototype.showChoices = function(originalTemplates){
