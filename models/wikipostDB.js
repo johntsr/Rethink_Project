@@ -28,7 +28,20 @@ model.setup = function (io, callback) {
                 // The table exists, setup the update listener
                 promise.then(function(result) {
                     console.log("Setting up update listener...");
-                    r.table(config.users).changes({includeInitial: true}).run(conn).then(function(cursor) {
+
+                    r.table(config.users).run(conn).then(function(cursor) {
+                        cursor.toArray(function(error, results) {
+                            for(var user = 0; user < results.length; user++){
+                                var filters = results[user].filters;
+                                var userID = results[user].id;
+                                for(var i = 0; i < filters.length; i++){
+                                    model.listenFilter( userID, filters[i], callback );
+                                }
+                            }
+                        });
+                    });
+
+                    r.table(config.users).changes().run(conn).then(function(cursor) {
                         cursor.each(function(error, row) {
                             var filters = row.new_val.filters;
                             var userID = row.new_val.id;
@@ -42,7 +55,7 @@ model.setup = function (io, callback) {
                     r.table(config.broadcast).changes({squash: 1.0}).run(conn).then(function(cursor) {
                         cursor.each(function(error, row) {
                             if(row.new_val){
-                                io.emit(row.new_val.toEmit + row.new_val.userID, row.new_val.broadData);
+                                io.emit(row.new_val.toEmit + row.new_val.id[0], row.new_val.broadData);
                                 r.table(config.broadcast).get(row.new_val.id).delete().run(conn);
                             }
                         });
@@ -72,9 +85,9 @@ model.savePost = function (wikipost, callback) {
     }).error(function(error) {
         callback(false, error);
     });
-}).error(function(error) {
-    callback(false, error);
-});
+    }).error(function(error) {
+        callback(false, error);
+    });
 };
 
 model.deletePost = function (wikipost, callback) {
@@ -93,7 +106,18 @@ model.deletePost = function (wikipost, callback) {
 // TODO
 model.addFilter = function (userID, wikipostFilter) {
     r.connect(config.database).then(function(conn) {
-        r.table(config.users).get(userID).update({'filters': r.row('filters').append({table:TABLE, 'filter': wikipostFilter})} )
+        r.table(config.users).get(userID).update(
+			function(user){
+  				return r.branch(
+		            user('filters').contains(
+		            	function(filterRecord) {
+    				 		return filterRecord('filter').eq(wikipostFilter);
+   						}).not(),
+		            {'filters': user('filters').append({table: TABLE, filter: wikipostFilter})},
+		            null
+	  			);
+  			}
+		 )
         .run(conn).then(calls.printOK).error(calls.throwError);
     }).error(calls.noFun);
 };
@@ -114,7 +138,7 @@ model.listenFilter = function (userID, wikipostFilter, callback) {
 
 model.prepareBroadcast = function (_toEmit, _userID, _broadData) {
     r.connect(config.database).then(function(conn) {
-        r.table(config.broadcast).insert({userID: _userID, toEmit: _toEmit, broadData: _broadData}).run(conn);
+        r.table(config.broadcast).insert({ id:[_userID, _broadData.id], toEmit: _toEmit, broadData: _broadData}).run(conn);
     }).error(function(error) {
         callback(false, error);
     });
