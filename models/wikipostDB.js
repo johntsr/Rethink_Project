@@ -4,7 +4,7 @@ var r = require('rethinkdb');
 var config = require('../config');
 
 
-function WikiBroadcast(_userID, _filterInfoData, _wikiPostChange){
+function WikiBroadcast(_filterInfoData, _wikiPostChange){
 	this.data = {};
 	this.data.filterInfoData = _filterInfoData;
 	this.data.emit = '';
@@ -21,7 +21,7 @@ function WikiBroadcast(_userID, _filterInfoData, _wikiPostChange){
 		this.data.emit = 'delete_';
 		this.data.broadcastData = _wikiPostChange.old_val;
 	}
-	this.data.id = [_userID, this.data.broadcastData.id];
+	this.data.id = [_filterInfoData.userID, this.data.broadcastData.id];
 }
 
 WikiBroadcast.prototype.getData = function(){
@@ -53,28 +53,19 @@ model.setup = function (io, callback) {
                 promise.then(function(result) {
                     console.log("Setting up update listener...");
 
-                    r.table(config.users).run(conn).then(function(cursor) {
-                        cursor.toArray(function(error, results) {
-                            for(var user = 0; user < results.length; user++){
-                                var filters = results[user].filters;
-                                var userID = results[user].id;
-								for(var i = 0; i < filters.length; i++){
-                                    model.listenFilter( userID, filters[i], callback );
-                                }
+                    r.table(config.filters).run(conn).then(function(cursor) {
+                        cursor.toArray(function(error, filters) {
+                            for(var i = 0; i < filters.length; i++){
+                                model.listenFilter( filters[i], callback );
                             }
                         });
                     });
 
-                    r.table(config.users).changes().run(conn).then(function(cursor) {
+                    r.table(config.filters).changes().run(conn).then(function(cursor) {
                         cursor.each(function(error, row) {
-							var user = row.new_val;
-                            if(user){
-								console.log(user);
-	                            var filters = user.filters;
-	                            var userID = user.id;
-	                            for(var i = 0; i < filters.length; i++){
-	                                model.listenFilter( userID, filters[i], callback );
-								}
+							var filter = row.new_val;
+                            if(filter){
+	                            model.listenFilter( filter, callback );
                             }
                         });
                     });
@@ -127,48 +118,64 @@ model.deletePost = function (wikipost, callback) {
 	});
 };
 
-// TODO
-model.addFilter = function (userID, filterInfo, callback) {
+model.addFilter = function (filterInfo, callback) {
     r.connect(config.database).then(function(conn) {
-        r.table(config.users).get(userID).update(
-			function(user){
-  				return r.branch(
-		            user('filters').contains(
-		            	function(filterRecord) {
-    				 		return filterRecord('filterTitle').eq( filterInfo.filterTitle() )
-									.or(filterRecord('query').eq( filterInfo.query() ));
-   						}).not(),
-		            {'filters': user('filters').append( filterInfo.setTable(config.wiki).getData() )},
-		            null
-	  			);
-  			}, {returnChanges: true} )
-        	.run(conn).then(
-			function(data){
-				callback(data.unchanged === 0);
+        r.table(config.filters).filter(
+			r.row('userID').eq(filterInfo.userID())
+			.and(r.row('table').eq(filterInfo.table()))
+			.and( r.row('query').eq(filterInfo.query()) )
+		).isEmpty()
+		.run(conn).then(
+			function(empty){
+				if( empty ){
+					r.table(config.filters).insert({
+						id: filterInfo.filterTitle(),
+						query: filterInfo.query(),
+						table: filterInfo.table(),
+						userID: filterInfo.userID(),
+					}, {returnChanges: true} ).run(conn).then(
+						function(data){
+							callback(data.inserted > 0);
+						});
+				}
+				else{
+					callback(false);
+				}
 			}
 		).error(calls.throwError);
     }).error(calls.noFun);
 };
 
-model.deleteFilter = function (userID, filterTitle, callback) {
+model.deleteFilter = function (userID, table, filterTitle, callback) {
     r.connect(config.database).then(function(conn) {
-        r.table(config.users).get(userID).update(
-			function(user){
-				return {
-				'filters': user('filters').filter(
-					function (item) {
-						return item('filterTitle').ne(filterTitle);
-					})
-				};
-  			}).run(conn).then(calls.noFun).error(calls.noFun);
+		r.table(config.filters).filter(
+			r.row('id').eq(filterTitle)
+			.and(r.row('userID').eq(userID))
+			.and(r.row('table').eq(table))
+		).delete()
+		.run(conn).then(calls.noFun).error(calls.noFun);
     }).error(calls.noFun);
 };
 
-model.listenFilter = function (userID, filterInfoData, callback) {
+model.getFilters = function (userID, table, callback) {
+    r.connect(config.database).then(function(conn) {
+		r.table(config.filters).filter(
+			r.row('userID').eq(userID)
+			.and(r.row('table').eq(table))
+		).run(conn).then(function(cursor) {
+	        cursor.toArray(function(error, results) {
+	            if (error) throw error;
+	            callback(results);
+	        });
+	    }).error(calls.noFun);
+    }).error(calls.noFun);
+};
+
+model.listenFilter = function (filterInfoData, callback) {
     r.connect(config.database).then(function(conn) {
         r.table(filterInfoData.table).filter( filterInfoData.query ).changes().run(conn).then(function(cursor) {
            cursor.each(function(error, rowChange) {
-               model.prepareBroadcast(new WikiBroadcast(userID, filterInfoData, rowChange) );
+               model.prepareBroadcast(new WikiBroadcast(filterInfoData, rowChange) );
            });
         }).error(calls.noFun);
     }).error(calls.noFun);

@@ -10,6 +10,7 @@ module.exports = {
   wiki: "Wiki",
   users: "Users",
   broadcast: 'Broadcast',
+  filters: 'Filters',
 
   port: process.env.APP_PORT || 3000
 };

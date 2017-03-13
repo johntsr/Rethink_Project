@@ -21,11 +21,12 @@ function noSQL_AND(expression){
 	return ".and(" + expression + ")";
 }
 
-function FilterInfo(filterData){		// as got from client
+function FilterInfo(_userID, filterData){		// as got from client
 	this.filterInfo = {};
 	this.filterInfo.filterTitle = filterData.filterTitle;
 	this.filterInfo.query = "";
-	this.filterInfo.table = "NO_TABLE";
+	this.filterInfo.table = filterData.table;
+	this.filterInfo.userID = _userID;
 
 	var filters = filterData.filterOptions;
 	var partQuery = createTypeFilter(filters[0]).toNoSQLQuery();
@@ -40,25 +41,28 @@ FilterInfo.prototype.appendQuery = function(partQuery){
 	this.filterInfo.query += partQuery;
 };
 
-FilterInfo.prototype.filterTitle = function(partQuery){
+FilterInfo.prototype.filterTitle = function(){
 	return this.filterInfo.filterTitle;
 };
 
-FilterInfo.prototype.query = function(partQuery){
+FilterInfo.prototype.query = function(){
 	return this.filterInfo.query;
 };
 
-FilterInfo.prototype.setTable = function(_table){
-	this.filterInfo.table = _table;
-	return this;
+FilterInfo.prototype.table = function(){
+	return this.filterInfo.table;
+};
+
+FilterInfo.prototype.userID = function(){
+	return this.filterInfo.userID;
 };
 
 FilterInfo.prototype.getData = function(){
 	return this.filterInfo;
 };
 
-function createFilter(data){
-	return new FilterInfo(data);
+function createFilter(userID, data){
+	return new FilterInfo(userID, data);
 }
 
 function createTypeFilter(filter){

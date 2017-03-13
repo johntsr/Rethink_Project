@@ -60,24 +60,23 @@ module.exports = function (app, passport) {
         });
     });
 
-    app.get('/profile/getfilters', isLoggedIn, function (req, res) {
-        db.getUserByID(req.user.id, function (err, user) {
+    app.post('/profile/getfilters', isLoggedIn, function (req, res) {
+        var table = req.body.table;
+        db.getFilters(req.user.id, table, function (results) {
             var titles = [];
-            var filters = user.filters;
-            for (var i = 0; i < filters.length; i++) {
-                titles.push(filters[i].filterTitle);
+            for (var i = 0; i < results.length; i++) {
+                titles.push(results[i].id);
             }
             res.send( JSON.stringify(titles) );
         });
     });
-
 
 	app.get('/profile/templates', isLoggedIn, function (req, res) {
         res.sendFile( path.resolve('views/templates.html') );
     });
 
 	app.post('/profile/addfilter', isLoggedIn, function (req, res) {
-		db.addFilter(req.user.id, filters.createFilter(req.body.userData),
+		db.addFilter(filters.createFilter(req.user.id, req.body.userData),
         function(_success){
             res.send( JSON.stringify({success: _success}) );
         });
@@ -97,8 +96,11 @@ module.exports = function (app, passport) {
         });
 	});
 
-    app.delete('/profile/filters/delete/:filterTitle', isLoggedIn, function(req,res){
-		db.deleteFilter(req.user.id, req.params.filterTitle, function (success, result) {
+    app.delete('/profile/filters/delete', isLoggedIn, function(req,res){
+        var userID = req.user.id;
+        var table = req.body.table;
+        var title = req.body.title;
+		db.deleteFilter(userID, table, title, function (success, result) {
             if (success) res.json({
                 status: 'OK'
             });

@@ -80,8 +80,9 @@ function getIDAsync(){
 
 function getFiltersAsync(originalTemplates){
     $.ajax({
-        type: 'GET',
+        type: 'POST',
         url: '/profile/getfilters',
+        data: {table: "Wiki"},
         success: function(data) {
             filterTitles = JSON.parse(data);
             for(var i = 0; i < filterTitles.length; i++){
@@ -158,6 +159,7 @@ $(document).ready(function () {
             sendData.triggerError('The title is required');
         }
         sendData.add("filterTitle", title);
+        sendData.add("table", "Wiki");
 
         for (var i = 0; i < fieldParsers.length; i++) {
             fieldParsers[i].pushData(sendData);
@@ -184,7 +186,11 @@ $(document).ready(function () {
         $('#' + id).remove();
         $.ajax({
             type: 'DELETE',
-            url: '/profile/filters/delete/' + filterTitles[index]
+            url: '/profile/filters/delete/',
+            data: {
+                table: "Wiki",
+                title: filterTitles[index]
+			}
         });
     });
 
