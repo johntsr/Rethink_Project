@@ -2,6 +2,10 @@ body{
   font-family:arial,sans-serif;
 }
 
+.serverResult{
+	display:inline;
+}
+
 ul.createFilters {
   margin: 1em;
   padding: 0;

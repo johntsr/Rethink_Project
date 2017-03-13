@@ -72,7 +72,10 @@ module.exports = function (app, passport) {
 	app.post('/profile/addfilter', isLoggedIn, function (req, res) {
         console.log(filters.createFilter(req.body.userData));
 		console.log(req.user.id);
-		db.addFilter(req.user.id, filters.createFilter(req.body.userData));
+		db.addFilter(req.user.id, filters.createFilter(req.body.userData),
+        function(_success){
+            res.send( JSON.stringify({success: _success}) );
+        });
     });
 
 	app.delete('/profile/wikipost/delete/:id', isLoggedIn, function(req,res){

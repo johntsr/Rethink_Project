@@ -104,7 +104,7 @@ model.deletePost = function (wikipost, callback) {
 
 
 // TODO
-model.addFilter = function (userID, wikipostFilter) {
+model.addFilter = function (userID, wikipostFilter, callback) {
     r.connect(config.database).then(function(conn) {
         r.table(config.users).get(userID).update(
 			function(user){
@@ -116,9 +116,12 @@ model.addFilter = function (userID, wikipostFilter) {
 		            {'filters': user('filters').append({table: TABLE, filter: wikipostFilter})},
 		            null
 	  			);
-  			}
-		 )
-        .run(conn).then(calls.printOK).error(calls.throwError);
+  			}, {returnChanges: true} )
+        	.run(conn).then(
+			function(data){
+				callback(data.unchanged === 0);
+			}
+		).error(calls.throwError);
     }).error(calls.noFun);
 };
 

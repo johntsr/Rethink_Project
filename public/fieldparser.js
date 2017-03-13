@@ -26,7 +26,11 @@ SendServerData.prototype.add = function(newData){
 	}
 };
 
-SendServerData.prototype.send = function(serverURL){
+SendServerData.prototype.send = function(serverURL, callback){
+	if(!callback){
+		callback = function(data) {};
+	}
+
 	if( this.error() ){
 		alert(this.errorInfo.description);
 	}
@@ -37,7 +41,7 @@ SendServerData.prototype.send = function(serverURL){
 			data: {
 				userData: this.data
 			},
-			success: function(data) {}
+			success: callback
 		});
 	}
 };

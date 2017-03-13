@@ -2,7 +2,6 @@ var templates;
 var ID;
 var fieldParsers = [];
 
-
 function deletePost(id) {
     hidePost(id);
     propagateDelete(id);
@@ -29,10 +28,10 @@ function fixListIndexes(){
 
 function addWikiPost(originalTemplates, wikipost){
     var loadSelector = 'li.wikipost';
-    var index = $( "li.wikipost" ).length + 1;
+    var index = 1;
 	var content = { attrs: { id: wikipost.id }, text: { '.message': wikipost.comment, '.user': wikipost.user, '.title': wikipost.title, '.position': index}};
 	var wikiPostTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
-    $("#wikiposts").append( $(wikiPostTemplate) );
+    $("#wikiposts").prepend( $(wikiPostTemplate) );
 }
 
 function getIDAsync(socket){
@@ -43,6 +42,7 @@ function getIDAsync(socket){
             ID = JSON.parse(data).id;
             socket.on('new_' + ID, function(wikipost) {
                 addWikiPost(templates, wikipost);
+                fixListIndexes();
         	});
 
         	socket.on('delete_' + ID, function(wikipost) {
@@ -51,6 +51,7 @@ function getIDAsync(socket){
 
         	socket.on('update_' + ID, function(wikipost) {
         		addWikiPost(templates, wikipost);
+                fixListIndexes();
             });
         }
     });
@@ -75,6 +76,7 @@ function getWikiPostsAsync(){
             for (var i = 0; i < wikiposts.length; i++) {
                 addWikiPost(templates, wikiposts[i]);
             }
+            fixListIndexes();
         }
     });
 }
@@ -127,11 +129,21 @@ $(document).ready(function () {
         for (var i = 0; i < fieldParsers.length; i++) {
             fieldParsers[i].storeData(sendData);
         }
-        // console.log(sendData.toString());
-        sendData.send('/profile/addfilter');
+        sendData.send('/profile/addfilter',
+            function afterAddition(data){
+                var success = JSON.parse(data).success;
+                if( success){
+                    $('#filterResponse').text("Filter successfully added!");
+                }
+                else{
+                    $('#filterResponse').text("Filter wasn't added, it already exists!");
+                }
+                var milliseconds = 3000;
+                setTimeout(function(){ $('#filterResponse').text(""); }, milliseconds);
+            });
     });
 
-    $('#filterstuff').hide();
+    $('#filterstuff').hide(0);
 
     $('#hideshowfilter').click(function(){
         $('#filterstuff').toggle("fast");
