@@ -18,3 +18,6 @@ model.noFun =
 
 model.printOK =
 	function(err) { console.log("OK");};
+
+model.print =
+	function(str) { console.log(str);};

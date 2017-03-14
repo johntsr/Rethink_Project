@@ -160,8 +160,6 @@ model.addFilter = function (filterInfo, callback) {
 };
 
 model.deleteFilter = function (userID, table, filterTitle, callback) {
-	console.log(table);
-	console.log(filterTitle);
     r.connect(config.database).then(function(conn) {
 		r.table(config.filters).filter(
 			r.row('filterTitle').eq(filterTitle)
@@ -187,6 +185,7 @@ model.getFilters = function (userID, table, callback) {
 };
 
 model.listenFilter = function (filterInfoData) {
+    var endOfDay = false;
     r.connect(config.database).then(function(conn) {
 		r.table(config.filters).filter(
 			r.row('userID').eq(filterInfoData.userID)
@@ -194,16 +193,25 @@ model.listenFilter = function (filterInfoData) {
 			.and( r.row('query').eq(filterInfoData.query)
 					.or(r.row('filterTitle').eq(filterInfoData.filterTitle) )
 				)
-		).changes().isEmpty()
+		).changes()
 		.run(conn).then(
-			function(empty){
-				if(empty){
-					conn.close();
-				}
+			function(cursor){
+                cursor.each(function(error, rowChange) {
+                    if(!rowChange.new_val){
+                        endOfDay = true;
+                        cursor.close();
+                        return false;
+                    }
+     			});
 			});
         r.table(filterInfoData.table).filter( filterInfoData.query ).changes().run(conn).then(function(cursor) {
            cursor.each(function(error, rowChange) {
-			   	model.prepareBroadcast(new WikiBroadcast(filterInfoData, rowChange) );
+               if(endOfDay){
+                   cursor.close();
+                   conn.close();
+                   return false;
+               }
+			   model.prepareBroadcast(new WikiBroadcast(filterInfoData, rowChange) );
 			});
     	}).error(calls.noFun);
 	})

@@ -90,6 +90,8 @@ function addFilter(originalTemplates, filterTitle){
     var content = { attrs: { id: title }, text: { '.filter_title': filterTitle} };
     var currentFilterTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
     $("#currentFilters").append( $(currentFilterTemplate) );
+
+    filterTitles.push(filterTitle);
 }
 
 function getFiltersAsync(originalTemplates){
@@ -98,9 +100,9 @@ function getFiltersAsync(originalTemplates){
         url: '/profile/getfilters',
         data: {table: "Wiki"},
         success: function(data) {
-            filterTitles = JSON.parse(data);
-            for(var i = 0; i < filterTitles.length; i++){
-                addFilter(originalTemplates, filterTitles[i]);
+            var tempTitle = JSON.parse(data);
+            for(var i = 0; i < tempTitle.length; i++){
+                addFilter(originalTemplates, tempTitle[i]);
             }
         }
     });
@@ -109,8 +111,9 @@ function getFiltersAsync(originalTemplates){
 function hideFilter(filterTitle){
     var titleID = noWhiteSpace(filterTitle);
     $('#' + titleID).remove();
+    var index = filterTitles.indexOf(filterTitle);
+    filterTitles.splice(index, 1);
 }
-
 
 function deleteFilter(filterTitle){
     $.ajax({
@@ -207,12 +210,14 @@ $(document).ready(function () {
 
     $('#currentFilters').on('click', '.deleteFilter', function (e) {
         var index = $(this).index() - 1;
+        console.log(index);
+        console.log(filterTitles[index]);
         deleteFilter(filterTitles[index]);
     });
 
     $('#filterstuff').hide(0);
 
     $('#hideshowfilter').click(function(){
-        $('#filterstuff').toggle("fast");
+    	$('#filterstuff').toggle("fast");
     });
 });
