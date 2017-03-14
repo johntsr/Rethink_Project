@@ -4,9 +4,13 @@ var fieldParsers = [];
 var filterTitles = [];
 
 function deletePost(id) {
+    console.log("Wait server to delete...");
     $.ajax({
         type: 'DELETE',
-        url: '/profile/wikipost/delete/' + id
+        url: '/profile/wikipost/delete/' + id,
+        success: function(data) {
+            console.log("Done!");
+        }
     });
 }
 

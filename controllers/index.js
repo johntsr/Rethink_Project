@@ -54,15 +54,7 @@ module.exports = function (app, passport) {
     app.post('/profile/addwikipost', isLoggedIn, function (req, res) {
         var wikipost = new wiki.WikiPost();
         wikipost.setProp("title", req.body.userData.title);
-
-        db.savePost(wikipost.getData(), function (success, result) {
-            if (success) res.json({
-                status: 'OK'
-            });
-            else res.json({
-                status: 'Error'
-            });
-        });
+        db.savePost(wikipost.getData());
     });
 
     app.get('/profile/getwikiposts', isLoggedIn, function (req, res) {
@@ -101,13 +93,10 @@ module.exports = function (app, passport) {
 
 	app.delete('/profile/wikipost/delete/:id', isLoggedIn, function(req,res){
 		var id = req.params.id;
-		db.deletePost(id, function (success, result) {
-            if (success) res.json({
-                status: 'OK'
-            });
-            else res.json({
-                status: 'Error'
-            });
+        console.log("Got delete, let's do it...");
+		db.deletePost(id);
+         res.json({
+            status: 'OK'
         });
 	});
 
