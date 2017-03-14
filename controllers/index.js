@@ -26,6 +26,23 @@ module.exports = function (app, passport) {
 		res.redirect('/login');
 	});
 
+    app.post('/signin', function(req, res) {
+        var username = req.body.username;
+        var password = req.body.password;
+		db.signIn(username, password,
+            function(_success){
+                res.send( JSON.stringify({success: _success}) );
+            }
+        );
+	});
+
+	app.post('/signout', function(req, res) {
+        var userID = req.user.id;
+		req.logout();
+		db.signOut(userID);
+		res.redirect('/login');
+	});
+
 	app.get('/profile', isLoggedIn, function (req, res) {
 		res.sendFile( path.resolve('views/profile.html') );
 	});

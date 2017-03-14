@@ -157,8 +157,6 @@ function getFieldsInfoAsync(){
 }
 
 $(document).ready(function () {
-    var socket = io();
-
     getTemplatesAsync();
 
     $('#wikiposts').on('click', '.deletePost', function (e) {
@@ -193,7 +191,6 @@ $(document).ready(function () {
             fieldParsers[i].pushData(sendData);
         }
 
-        // console.log(sendData.toString());
         sendData.send('/profile/addfilter',
             function afterAddition(data){
                 var success = JSON.parse(data).success;
@@ -210,8 +207,6 @@ $(document).ready(function () {
 
     $('#currentFilters').on('click', '.deleteFilter', function (e) {
         var index = $(this).index() - 1;
-        console.log(index);
-        console.log(filterTitles[index]);
         deleteFilter(filterTitles[index]);
     });
 

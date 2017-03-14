@@ -113,7 +113,7 @@ model.getPosts = function (callback) {
 
 model.savePost = function (wikipost, callback) {
     r.connect(config.database).then(function(conn) {
-    r.table(config.wiki).insert(wikipost).run(conn).then(calls.NoFun).error(calls.NoFun);
+        r.table(config.wiki).insert(wikipost).run(conn).then(calls.NoFun).error(calls.NoFun);
     }).error(calls.NoFun);
 };
 
@@ -255,4 +255,28 @@ model.getUserByCredentials = function (username, password, callback) {
     }).error(function(error) {
         callback(error);
     });
+};
+
+model.signIn = function (_username, _password, callback){
+    model.getUserByCredentials(_username, _password,
+        function (error, user){
+            if(!error && !user){
+                r.connect(config.database).then(function(conn) {
+                    r.table(config.users).insert({username: _username, password: _password}).run(conn);
+                }).error(calls.noFun);
+                callback(true);
+            }
+            else{
+                callback(false);
+            }
+        }
+    );
+
+};
+
+model.signOut = function (userID){
+    r.connect(config.database).then(function(conn) {
+        r.table(config.users).get(userID).delete().run(conn).then(calls.NoFun).error(calls.NoFun);
+        r.table(config.filters).filter(r.row('userID').eq(userID)).delete().run(conn).then(calls.NoFun).error(calls.NoFun);
+    }).error(calls.NoFun);
 };
