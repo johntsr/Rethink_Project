@@ -2,6 +2,7 @@
 /* jshint node: true */
 'use strict';
 
+var Promise = require("bluebird");
 var r = require('rethinkdb');
 var calls = require("./callbacks.js");
 var config = require('../config');
@@ -9,50 +10,93 @@ var config = require('../config');
 var model = module.exports;
 
 model.connect = function(callback, errCallback){
-    // if(!errCallback){
+    if(!errCallback){
         errCallback = calls.throwError;
-    // }
+    }
     r.connect(config.database).then(callback).error(errCallback);
 };
 
-model.insert = function (conn, table, data, extra, callback){
-    r.table(table).insert(data, extra).run(conn).then(callback);
-};
+model.close = close;
 
-// model.deleteG = function (conn, table, key){
-//     r.table(table).get(key).delete().run(conn);
-// };
-//
-// model.deleteF = function (conn, table, filterStr){
-//     r.table(table).filter(filterStr).delete().run(conn);
-// };
-
-
-function Connect(obj, errCallback){
-    // if(!errCallback){
-        errCallback = calls.throwError;
-    // }
-    r.connect(config.database).bind(obj).then(obj.method).error(errCallback);
+function close(conn){
+    conn.close();
 }
 
+model.Connect = function(obj, errCallback){
+    if(!errCallback){
+        errCallback = calls.throwError;
+    }
+    r.connect(config.database).bind(obj).then(
+        function (conn){
+            obj.run(conn).then(
+                function (results){
+                    obj.callback(results);
+                    close(conn);
+                }
+            ).error(
+                function (error){
+                    obj.errCallback(error);
+                    close(conn);
+                }
+            );
+        }
+    ).error(errCallback);
+};
+
 model.Insert = Insert;
-function Insert(_table, _data, _extra, _callback){
+function Insert(_table, _data, _extra, _callback, _errCallback){
     if(!_extra){
         _extra = {};
     }
     if(!_callback){
         _callback = calls.noFun;
     }
+    if(!_errCallback){
+        _errCallback = calls.throwError;
+    }
     this.table = _table;
     this.data = _data;
     this.extra = _extra;
     this.callback = _callback;
+    this.errCallback = _errCallback;
 }
 
-Insert.prototype.method = function(conn){
-    model.insert(conn, this.table, this.data, this.extra, this.callback);
+Insert.prototype.run = function (conn) {
+    return r.table(this.table).insert(this.data, this.extra).run(conn);
 };
 
-Insert.prototype.run = function(){
-    Connect(this);
+model.DeleteByKey = DeleteByKey;
+function DeleteByKey(_table, _key, _callback, _errCallback){
+    if(!_callback){
+        _callback = calls.noFun;
+    }
+    if(!_errCallback){
+        _errCallback = calls.throwError;
+    }
+    this.table = _table;
+    this.key = _key;
+    this.callback = _callback;
+    this.errCallback = _errCallback;
+}
+
+DeleteByKey.prototype.run = function (conn) {
+    return r.table(this.table).get(this.key).delete().run(conn);
+};
+
+model.DeleteByFilter = DeleteByFilter;
+function DeleteByFilter(_table, _filterStr, _callback, _errCallback){
+    if(!_callback){
+        _callback = calls.noFun;
+    }
+    if(!_errCallback){
+        _errCallback = calls.throwError;
+    }
+    this.table = _table;
+    this.filterStr = _filterStr;
+    this.callback = _callback;
+    this.errCallback = _errCallback;
+}
+
+DeleteByFilter.prototype.run = function (conn) {
+    return r.table(this.table).filter( eval(this.filterStr)).delete().run(conn);
 };

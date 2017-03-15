@@ -15,6 +15,7 @@ function deletePost(id) {
 }
 
 function hidePost(id){
+    console.log(id);
     $('#' + id).remove();
     fixListIndexes();
 }

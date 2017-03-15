@@ -1,15 +1,30 @@
+/*jslint vars: true, plusplus: true, devel: true, nomen: true, indent: 4, maxerr: 50 */
+/* jshint node: true */
+'use strict';
+
 var wiki = require("./wikipost.js");
 
 var model = module.exports;
 model.createFilter = createFilter;
+model.FilterParser = FilterParser;
+
+function stringify(value){
+	if(typeof(value) == 'string'){
+		return "'" + value + "'";
+	}
+	else{
+		return value + "";
+	}
+}
+
 
 function choiceName(fieldName, choiceIndex){
 	for (var i = 0; i < wiki.FieldsInfo.length; i++) {
 		if( wiki.FieldsInfo[i].name === fieldName  ){
-			return "'" + wiki.FieldsInfo[i].choices[choiceIndex] + "'" ;
+			return stringify(wiki.FieldsInfo[i].choices[choiceIndex]);
 		}
 	}
-	return "BAD choiceName() call: fieldName = " + fieldName + " , choiceIndex = " + choiceIndex;
+	return "BAD choiceName() call: fieldName = " + stringify(fieldName) + " , choiceIndex = " + choiceIndex;
 }
 
 
@@ -46,6 +61,7 @@ FilterInfo.prototype.filterTitle = function(){
 };
 
 FilterInfo.prototype.query = function(){
+	console.log(this.filterInfo.query);
 	return this.filterInfo.query;
 };
 
@@ -90,10 +106,8 @@ FilterParser.prototype.rowName = function(){
 };
 
 FilterParser.prototype.noSQLfieldValue = function(value){
-	return this.rowName() + "('" + this.filterName() + "')"  + ".eq(" + value + ")";
+	return "r.row(" + stringify(this.filterName()) + ")"  + ".eq(" + stringify(value) + ")";
 };
-
-
 
 
 

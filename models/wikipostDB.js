@@ -3,6 +3,7 @@ var calls = require("./callbacks.js");
 var broadcast = require("./wikibroadcast.js");
 var w = require("./rethinkwrap.js");
 var r = require('rethinkdb');
+var fparser = require('./filterparser');
 var config = require('../config');
 
 
@@ -58,15 +59,18 @@ model.setup = function (io) {
                             });
                         }).error(calls.throwError);
 
-                        r.table(config.broadcast).changes({squash: 1.0}).run(conn).then(function(cursor) {
+                        r.table(config.broadcast).changes().run(conn).then(function(cursor) {
+                        // r.table(config.broadcast).changes({squash: 1.0}).run(conn).then(function(cursor) {
                             cursor.each(function(error, row) {
+                                console.log(row);
     							var wikiBroadcastData = row.new_val;
                                 if(wikiBroadcastData){
+                                    console.log("Send it finally!");
     								var data = {filterTitle: wikiBroadcastData.filterInfoData.filterTitle,
     											wikiData: wikiBroadcastData.broadcastData};
     								// NOTE: id[0]!
                                     io.emit(wikiBroadcastData.emit + wikiBroadcastData.id[0], data);
-                                    r.table(config.broadcast).get(wikiBroadcastData.id).delete().run(conn);
+                                    // r.table(config.broadcast).get(wikiBroadcastData.id).delete().run(conn);
                                 }
                             });
                         }).error(calls.throwError);
@@ -84,6 +88,7 @@ model.getPosts = function (callback) {
     	    r.table(config.wiki).run(conn).then(function(cursor) {
     	        cursor.toArray(function(error, results) {
     	            if (error) throw error;
+                    w.close(conn);
     	            callback(results);
     	        });
     	    }).error(calls.throwError);
@@ -92,15 +97,11 @@ model.getPosts = function (callback) {
 };
 
 model.savePost = function (wikipost) {
-    new w.Insert(config.wiki, wikipost).run();
+    w.Connect( new w.Insert(config.wiki, wikipost) );
 };
 
 model.deletePost = function (wikipost) {
-    w.connect(
-        function(conn) {
-            r.table(config.wiki).get(wikipost).delete().run(conn).then(calls.print("Done!"));
-        }
-    );
+    w.Connect( new w.DeleteByKey(config.wiki, wikipost, calls.print("Done!")) );
 };
 
 model.addFilter = function (filterInfo, callback) {
@@ -116,12 +117,15 @@ model.addFilter = function (filterInfo, callback) {
     		.run(conn).then(
     			function(empty){
     				if( empty ){
-                        w.insert(conn, config.filters, filterInfo.getData(), {returnChanges: true},
-                            function(data){
-                                callback(data.inserted > 0);
-                            });
+                        w.Connect(
+                            new w.Insert(config.filters, filterInfo.getData(), {returnChanges: true},
+                                function(data){
+                                    callback(data.inserted > 0);
+                                }
+                        ));
     				}
     				else{
+                        w.close(conn);
     					callback(false);
     				}
     			}
@@ -131,15 +135,10 @@ model.addFilter = function (filterInfo, callback) {
 };
 
 model.deleteFilter = function (userID, table, filterTitle, callback) {
-    w.connect(
-        function(conn) {
-    		r.table(config.filters).filter(
-    			r.row('filterTitle').eq(filterTitle)
-    			.and(r.row('userID').eq(userID))
-    			.and(r.row('table').eq(table))
-    		).delete().run(conn);
-        }
-    );
+    // var filter = new FilterInfo(userID, );
+    // TODO
+    var filter = "r.row('filterTitle').eq(filterTitle).and(r.row('userID').eq(userID)).and(r.row('table').eq(table))";
+    w.Connect( new w.DeleteByFilter(config.filters, filter) );
 };
 
 model.getFilters = function (userID, table, callback) {
@@ -172,6 +171,7 @@ model.listenFilter = function (filterInfoData) {
     		.run(conn).then(
     			function(cursor){
                     cursor.each(function(error, rowChange) {
+                        console.log("Check for deletion!");
                         if(!rowChange.new_val){
                             endOfDay = true;
                             cursor.close();
@@ -181,6 +181,7 @@ model.listenFilter = function (filterInfoData) {
     			}).error(calls.throwError);
             r.table(filterInfoData.table).filter( filterInfoData.query ).changes().run(conn).then(function(cursor) {
                cursor.each(function(error, rowChange) {
+                   console.log("Found Broadcast!");
                    if(endOfDay){
                        cursor.close();
                        conn.close();
@@ -194,7 +195,8 @@ model.listenFilter = function (filterInfoData) {
 };
 
 model.prepareBroadcast = function (wikiBroadcast) {
-    new w.Insert(config.broadcast, wikiBroadcast.getData()).run();
+    console.log(wikiBroadcast.data.emit);
+    w.Connect( new w.Insert(config.broadcast, wikiBroadcast.getData()) );
 };
 
 model.getUserByID = function (userID, callback) {
@@ -234,7 +236,7 @@ model.signIn = function (_username, _password, callback){
     model.getUserByCredentials(_username, _password,
         function (error, user){
             if(!error && !user){
-                new w.Insert(config.users, {username: _username, password: _password}).run();
+                w.Connect( new w.Insert(config.users, {username: _username, password: _password}) );
                 callback(true);
             }
             else{
@@ -246,10 +248,10 @@ model.signIn = function (_username, _password, callback){
 };
 
 model.signOut = function (userID){
-    w.connect(
-        function(conn) {
-            r.table(config.users).get(userID).delete().run(conn);
-            r.table(config.filters).filter(r.row('userID').eq(userID)).delete().run(conn);
-        }
-    );
+    w.Connect( new w.DeleteByKey(config.users, userID) );
+    console.log(typeof(userID));
+    // r.db('LiveUpdatesDB').table('Users').filter(r.row('id').eq('').or(r.row('id').ne('')).or(''));
+    var filter = new fparser.FilterParser({name: 'userID'}).noSQLfieldValue(userID);
+    console.log(filter);
+    w.Connect( new w.DeleteByFilter(config.filters, filter) );
 };

@@ -25,5 +25,7 @@ model.WikiBroadcast = function (_filterInfoData, _wikiPostChange){
 };
 
 model.WikiBroadcast.prototype.getData = function(){
+	console.log("asked for: ");
+	console.log(this.data);
 	return this.data;
 };
