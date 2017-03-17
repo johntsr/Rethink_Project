@@ -52,9 +52,12 @@ module.exports = function (app, passport) {
 	});
 
     app.post('/profile/addwikipost', isLoggedIn, function (req, res) {
+		console.log("OH!");
         var wikipost = new wiki.WikiPost();
         wikipost.setProp("title", req.body.userData.title);
         db.savePost(wikipost.getData());
+        console.log('');
+        console.log('');
     });
 
     app.get('/profile/getwikiposts', isLoggedIn, function (req, res) {

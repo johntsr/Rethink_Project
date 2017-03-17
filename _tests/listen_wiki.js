@@ -37,7 +37,7 @@ r.connect(config.database).then( function(conn) {
         var streamInfo = JSON.parse(event.data);
 		var dbData = new wiki.WikiPost(streamInfo).getData();
 		// console.log(dbData);
-        r.table(config.table).insert(dbData).run(conn)
+        r.table(config.wiki).insert(dbData).run(conn)
 			.then( function (result) {
 				written++;
 				if( written == Limit ){

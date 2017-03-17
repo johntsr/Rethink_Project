@@ -62,7 +62,6 @@ model.setup = function (io) {
                         r.table(config.broadcast).changes().run(conn).then(function(cursor) {
                         // r.table(config.broadcast).changes({squash: 1.0}).run(conn).then(function(cursor) {
                             cursor.each(function(error, row) {
-                                console.log(row);
     							var wikiBroadcastData = row.new_val;
                                 if(wikiBroadcastData){
                                     console.log("Send it finally!");
@@ -70,11 +69,10 @@ model.setup = function (io) {
     											wikiData: wikiBroadcastData.broadcastData};
     								// NOTE: id[0]!
                                     io.emit(wikiBroadcastData.emit + wikiBroadcastData.id[0], data);
-                                    // r.table(config.broadcast).get(wikiBroadcastData.id).delete().run(conn);
+									w.Connect(new w.DeleteByKey(config.broadcast, wikiBroadcastData.id), conn);
                                 }
                             });
                         }).error(calls.throwError);
-
                     }).error(calls.throwError);
                 });
             });
@@ -83,27 +81,20 @@ model.setup = function (io) {
 };
 
 model.getPosts = function (callback) {
-    w.connect(
-        function(conn) {
-    	    r.table(config.wiki).run(conn).then(function(cursor) {
-    	        cursor.toArray(function(error, results) {
-    	            if (error) throw error;
-                    w.close(conn);
-    	            callback(results);
-    	        });
-    	    }).error(calls.throwError);
-    	}
+    w.Connect(
+        new w.GetByFilter(config.wiki, 'true', function(cursor) {w.cursorToArray(cursor, callback);} )
     );
 };
 
 model.savePost = function (wikipost) {
-    w.Connect( new w.Insert(config.wiki, wikipost) );
+    w.Connect( new w.Insert(config.wiki, wikipost, calls.print("Done save post!")) );
 };
 
 model.deletePost = function (wikipost) {
-    w.Connect( new w.DeleteByKey(config.wiki, wikipost, calls.print("Done!")) );
+    w.Connect( new w.DeleteByKey(config.wiki, wikipost, calls.print("Done delete post!")) );
 };
 
+//NOTE
 model.addFilter = function (filterInfo, callback) {
     w.connect(
         function(conn) {
@@ -122,7 +113,7 @@ model.addFilter = function (filterInfo, callback) {
                                 function(data){
                                     callback(data.inserted > 0);
                                 }
-                        ));
+                        ), conn, true);
     				}
     				else{
                         w.close(conn);
@@ -135,28 +126,21 @@ model.addFilter = function (filterInfo, callback) {
 };
 
 model.deleteFilter = function (userID, table, filterTitle, callback) {
-    // var filter = new FilterInfo(userID, );
-    // TODO
-    var filter = "r.row('filterTitle').eq(filterTitle).and(r.row('userID').eq(userID)).and(r.row('table').eq(table))";
+    var filter = new fparser.AndFilter([{name:'filterTitle', value:filterTitle},
+                                        {name:'userID', value:userID},
+                                        {name:'table', value:table}]).toNoSQLQuery();
     w.Connect( new w.DeleteByFilter(config.filters, filter) );
 };
 
 model.getFilters = function (userID, table, callback) {
-    w.connect(
-        function(conn) {
-    		r.table(config.filters).filter(
-    			r.row('userID').eq(userID)
-    			.and(r.row('table').eq(table))
-    		).run(conn).then(function(cursor) {
-    	        cursor.toArray(function(error, results) {
-    	            if (error) throw error;
-    	            callback(results);
-    	        });
-    	    }).error(calls.throwError);
-        }
+    var filter = new fparser.AndFilter([{name:'userID', value:userID},
+                                        {name:'table', value:table}]).toNoSQLQuery();
+    w.Connect(
+        new w.GetByFilter(config.filters, filter,  function (cursor){w.cursorToArray(cursor, callback);} )
     );
 };
 
+//NOTE
 model.listenFilter = function (filterInfoData) {
     var endOfDay = false;
     w.connect(
@@ -179,9 +163,8 @@ model.listenFilter = function (filterInfoData) {
                         }
          			});
     			}).error(calls.throwError);
-            r.table(filterInfoData.table).filter( filterInfoData.query ).changes().run(conn).then(function(cursor) {
+            r.table(filterInfoData.table).filter( eval(filterInfoData.query) ).changes().run(conn).then(function(cursor) {
                cursor.each(function(error, rowChange) {
-                   console.log("Found Broadcast!");
                    if(endOfDay){
                        cursor.close();
                        conn.close();
@@ -195,40 +178,24 @@ model.listenFilter = function (filterInfoData) {
 };
 
 model.prepareBroadcast = function (wikiBroadcast) {
-    console.log(wikiBroadcast.data.emit);
-    w.Connect( new w.Insert(config.broadcast, wikiBroadcast.getData()) );
+    calls.print("Found broadcast!");
+    w.Connect( new w.Insert(config.broadcast, wikiBroadcast.getData(), calls.print("broadcast ready!")) );
 };
 
 model.getUserByID = function (userID, callback) {
-    w.connect(
-        function(conn) {
-            r.table(config.users).get(userID).run(conn).then(function(user) {
-        		callback(null, user);
-            }).error(function(error) {
-                callback(error);
-            });
-        }, callback
+    w.Connect( new w.GetByKey(config.users, userID,
+        function (user){ callback(null, user); },
+        function (error){ callback(error); })
     );
 };
 
 model.getUserByCredentials = function (username, password, callback) {
-    w.connect(
-        function(conn) {
-            r.table(config.users).filter(
-                r.row('username').eq(username).and(r.row('password').eq(password))
-            ).limit(1).run(conn).then(function(cursor) {
-        		 cursor.toArray(function(err, results) {
-                    if(results.length > 0){
-                        callback(false, results[0]);
-                    }
-                    else{
-                        callback(false, null);
-                    }
-                });
-            }).error(function(error) {
-                callback(error);
-            });
-        }, callback
+    var filter = new fparser.AndFilter([{name:'username', value:username},
+                                        {name:'password', value:password}]).toNoSQLQuery();
+    w.Connect(
+        new w.GetByFilter(config.users, filter,
+            function (cursor){ w.cursorToField(cursor, callback); },
+            function (error){ callback(error); })
     );
 };
 
@@ -249,9 +216,7 @@ model.signIn = function (_username, _password, callback){
 
 model.signOut = function (userID){
     w.Connect( new w.DeleteByKey(config.users, userID) );
-    console.log(typeof(userID));
-    // r.db('LiveUpdatesDB').table('Users').filter(r.row('id').eq('').or(r.row('id').ne('')).or(''));
-    var filter = new fparser.FilterParser({name: 'userID'}).noSQLfieldValue(userID);
-    console.log(filter);
+
+    var filter = new fparser.FilterParser({name: 'userID'}).eqValue(userID);
     w.Connect( new w.DeleteByFilter(config.filters, filter) );
 };

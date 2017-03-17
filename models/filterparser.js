@@ -7,6 +7,7 @@ var wiki = require("./wikipost.js");
 var model = module.exports;
 model.createFilter = createFilter;
 model.FilterParser = FilterParser;
+model.AndFilter = AndFilter;
 
 function stringify(value){
 	if(typeof(value) == 'string'){
@@ -21,7 +22,7 @@ function stringify(value){
 function choiceName(fieldName, choiceIndex){
 	for (var i = 0; i < wiki.FieldsInfo.length; i++) {
 		if( wiki.FieldsInfo[i].name === fieldName  ){
-			return stringify(wiki.FieldsInfo[i].choices[choiceIndex]);
+			return wiki.FieldsInfo[i].choices[choiceIndex];
 		}
 	}
 	return "BAD choiceName() call: fieldName = " + stringify(fieldName) + " , choiceIndex = " + choiceIndex;
@@ -61,7 +62,6 @@ FilterInfo.prototype.filterTitle = function(){
 };
 
 FilterInfo.prototype.query = function(){
-	console.log(this.filterInfo.query);
 	return this.filterInfo.query;
 };
 
@@ -105,7 +105,7 @@ FilterParser.prototype.rowName = function(){
 	return "r.row";
 };
 
-FilterParser.prototype.noSQLfieldValue = function(value){
+FilterParser.prototype.eqValue = function(value){
 	return "r.row(" + stringify(this.filterName()) + ")"  + ".eq(" + stringify(value) + ")";
 };
 
@@ -119,7 +119,7 @@ BoolFilter.prototype = Object.create(FilterParser.prototype);
 BoolFilter.prototype.constructor = BoolFilter;
 
 BoolFilter.prototype.toNoSQLQuery = function(){
-	return this.noSQLfieldValue(false);
+	return this.eqValue(false);
 };
 
 
@@ -138,7 +138,7 @@ MultipleFilter.prototype.toNoSQLQuery = function(){
 	for (; i < this.filter.value.length; i++) {
 		if( this.filter.value[i] === 'true' ){
 			choice = choiceName( this.filterName() , i);
-			query += this.noSQLfieldValue( choice );
+			query += this.eqValue( choice );
 			break;
 		}
 	}
@@ -147,9 +147,25 @@ MultipleFilter.prototype.toNoSQLQuery = function(){
 	for(; i < this.filter.value.length; i++) {
 		if( this.filter.value[i] === 'true' ){
 			choice = choiceName( this.filterName() , i);
-			query += noSQL_OR( this.noSQLfieldValue( choice ) );
+			query += noSQL_OR( this.eqValue( choice ) );
 		}
 	}
 
+	return query;
+};
+
+
+
+
+
+function AndFilter (filterArray){
+	this.filterArray = filterArray;
+}
+
+AndFilter.prototype.toNoSQLQuery = function(){
+	var query = new FilterParser(this.filterArray[0]).eqValue(this.filterArray[0].value);
+	for(var i = 1; i < this.filterArray.length; i++) {
+		query += noSQL_AND( new FilterParser(this.filterArray[i]).eqValue(this.filterArray[i].value) );
+	}
 	return query;
 };
