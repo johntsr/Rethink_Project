@@ -9,9 +9,16 @@ model.createFilter = createFilter;
 model.FilterParser = FilterParser;
 model.AndFilter = AndFilter;
 
+function escape(str){
+	return str.replace(/\\/g, "\\\\")
+	   .replace(/\$/g, "\\$")
+	   .replace(/'/g, "\\'")
+	   .replace(/"/g, "\\\"");
+}
+
 function stringify(value){
 	if(typeof(value) == 'string'){
-		return "'" + value + "'";
+		return "'" + escape(value) + "'";
 	}
 	else{
 		return value + "";

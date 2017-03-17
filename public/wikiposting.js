@@ -3,19 +3,31 @@ var ID;
 var fieldParsers = [];
 var filterTitles = [];
 
+function decodeHtml(html) {
+    var txt = document.createElement("textarea");
+    txt.innerHTML = html;
+    return txt.value;
+}
+
+function codeHtml(str){
+	var map = {
+		'&': '&amp;',
+		'<': '&lt;',
+		'>': '&gt;',
+		'"': '&quot;',
+		"'": '&#039;'
+	};
+	return str.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
 function deletePost(id) {
-    console.log("Wait server to delete...");
     $.ajax({
         type: 'DELETE',
-        url: '/profile/wikipost/delete/' + id,
-        success: function(data) {
-            console.log("Done!");
-        }
+        url: '/profile/wikipost/delete/' + id
     });
 }
 
 function hidePost(id){
-    console.log(id);
     $('#' + id).remove();
     fixListIndexes();
 }
@@ -34,7 +46,7 @@ function addWikiPost(originalTemplates, wikipost, filterTitle){
 
     var loadSelector = 'li.wikipost';
     var index = 1;
-	var content = { attrs: { id: wikipost.id }, text: { '.filter_title': filterTitle, '.message': wikipost.comment, '.user': wikipost.user, '.title': wikipost.title, '.position': index}};
+	var content = { attrs: { id: wikipost.id }, text: { '.filter_title': decodeHtml(filterTitle), '.message': decodeHtml(wikipost.comment), '.user': decodeHtml(wikipost.user), '.title': wikipost.title, '.position': index}};
 	var wikiPostTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
     $("#wikiposts").prepend( $(wikiPostTemplate) );
     fixListIndexes();
@@ -73,11 +85,11 @@ function getIDAsync(){
             });
 
             socket.on('newFilter_' + ID, function(data) {
-                addFilter(templates, data.filterTitle);
+                addFilter(templates, data.filterTitle, data.id);
         	});
 
         	socket.on('deleteFilter_' + ID, function(data) {
-                hideFilter(data.filterTitle);
+                hideFilter(data.filterTitle, data.id);
             });
 
             getFiltersAsync(templates);
@@ -89,10 +101,9 @@ function noWhiteSpace(str){
     return str.replace(/\s/g, "_");
 }
 
-function addFilter(originalTemplates, filterTitle){
-    var title = noWhiteSpace(filterTitle);
+function addFilter(originalTemplates, filterTitle, _id){
     var loadSelector = 'li.currentFilter';
-    var content = { attrs: { id: title }, text: { '.filter_title': filterTitle} };
+    var content = { attrs: { id: _id }, text: { '.filter_title': decodeHtml(filterTitle)} };
     var currentFilterTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
     $("#currentFilters").append( $(currentFilterTemplate) );
 
@@ -113,9 +124,8 @@ function getFiltersAsync(originalTemplates){
     });
 }
 
-function hideFilter(filterTitle){
-    var titleID = noWhiteSpace(filterTitle);
-    $('#' + titleID).remove();
+function hideFilter(filterTitle, _id){
+    $('#' + _id).remove();
     var index = filterTitles.indexOf(filterTitle);
     filterTitles.splice(index, 1);
 }
@@ -177,7 +187,7 @@ $(document).ready(function () {
         if(!title || title.trim().length === 0) {
             sendData.triggerError('The title is required');
         }
-        sendData.add("title", title);
+        sendData.add("title", codeHtml(title));
         sendData.send('/profile/addwikipost');
     });
 
@@ -189,7 +199,7 @@ $(document).ready(function () {
         if(!title || title.trim().length === 0) {
             sendData.triggerError('The title is required');
         }
-        sendData.add("filterTitle", title);
+        sendData.add("filterTitle", codeHtml(title));
         sendData.add("table", "Wiki");
 
         for (var i = 0; i < fieldParsers.length; i++) {

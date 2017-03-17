@@ -42,9 +42,7 @@ function cursorToField(cursor, callback){
 model.close = close;
 
 function close(conn){
-    console.log("close...");
     conn.close();
-    console.log("close done!");
 }
 
 function runAndClose(conn, obj, closeFlag){

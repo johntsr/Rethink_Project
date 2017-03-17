@@ -43,18 +43,21 @@ model.setup = function (io) {
                             cursor.each(function(error, row) {
     							var filterInfoData = row.new_val;
     							var userID;
+                                var _id;
     							var _title;
                                 if(filterInfoData){
     	                            model.listenFilter(filterInfoData);
+                                    _id = filterInfoData.userID;
     								userID = filterInfoData.userID;
     								_title = filterInfoData.filterTitle;
-    								io.emit('newFilter_' + userID, {filterTitle: _title});
+    								io.emit('newFilter_' + userID, { id: _id, filterTitle: _title});
                                 }
     							else{
-    								filterInfoData = row.old_val;
+                                    filterInfoData = row.old_val;
+                                    _id = filterInfoData.userID;
     								userID = filterInfoData.userID;
-    								_title = filterInfoData.filterTitle;
-    								io.emit('deleteFilter_' + userID, {filterTitle: _title});
+                                    _title = filterInfoData.filterTitle;
+    								io.emit('deleteFilter_' + userID, {id: _id, filterTitle: _title});
     							}
                             });
                         }).error(calls.throwError);
@@ -98,16 +101,14 @@ model.deletePost = function (wikipost) {
 model.addFilter = function (filterInfo, callback) {
     w.connect(
         function(conn) {
-            r.table(config.filters).filter(
-    			r.row('userID').eq(filterInfo.userID())
-    			.and(r.row('table').eq(filterInfo.table()))
-    			.and( r.row('query').eq(filterInfo.query())
-    					.or(r.row('filterTitle').eq(filterInfo.filterTitle()) )
-    				)
-    		).isEmpty()
-    		.run(conn).then(
+			var filter = new fparser.AndFilter([{name:'userID', value:filterInfo.userID()},
+		                                        {name:'table', value:filterInfo.table()},
+												{name:'query', value:filterInfo.query()},
+												{name:'filterTitle', value:filterInfo.filterTitle()}]).toNoSQLQuery();
+            r.table(config.filters).filter( eval(filter) ).isEmpty().run(conn).then(
     			function(empty){
     				if( empty ){
+                        console.log(filterInfo.getData());
                         w.Connect(
                             new w.Insert(config.filters, filterInfo.getData(), {returnChanges: true},
                                 function(data){
@@ -145,14 +146,11 @@ model.listenFilter = function (filterInfoData) {
     var endOfDay = false;
     w.connect(
         function(conn) {
-    		r.table(config.filters).filter(
-    			r.row('userID').eq(filterInfoData.userID)
-    			.and(r.row('table').eq(filterInfoData.table))
-    			.and( r.row('query').eq(filterInfoData.query)
-    					.or(r.row('filterTitle').eq(filterInfoData.filterTitle) )
-    				)
-    		).changes()
-    		.run(conn).then(
+            var filter = new fparser.AndFilter([{name:'userID', value:filterInfoData.userID},
+                                    {name:'table', value:filterInfoData.table},
+                                    {name:'query', value:filterInfoData.query},
+                                    {name:'filterTitle', value:filterInfoData.filterTitle}]).toNoSQLQuery();
+    		r.table(config.filters).filter( eval(filter) ).changes().run(conn).then(
     			function(cursor){
                     cursor.each(function(error, rowChange) {
                         console.log("Check for deletion!");
@@ -189,9 +187,21 @@ model.getUserByID = function (userID, callback) {
     );
 };
 
+function codeHtml(str){
+	var map = {
+		'&': '&amp;',
+		'<': '&lt;',
+		'>': '&gt;',
+		'"': '&quot;',
+		"'": '&#039;'
+	};
+	return str.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+
 model.getUserByCredentials = function (username, password, callback) {
-    var filter = new fparser.AndFilter([{name:'username', value:username},
-                                        {name:'password', value:password}]).toNoSQLQuery();
+    var filter = new fparser.AndFilter([{name:'username', value:codeHtml(username)},
+                                        {name:'password', value:codeHtml(password)}]).toNoSQLQuery();
     w.Connect(
         new w.GetByFilter(config.users, filter,
             function (cursor){ w.cursorToField(cursor, callback); },
