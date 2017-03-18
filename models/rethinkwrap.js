@@ -8,15 +8,24 @@ var calls = require("./callbacks.js");
 var config = require('../config');
 
 var model = module.exports;
+model.cursorToArray = cursorToArray;
+model.cursorToField = cursorToField;
+model.close = close;
+model.connect = connect;
+model.Connect = Connect;
+model.Insert = Insert;
+model.DeleteByKey = DeleteByKey;
+model.DeleteByFilter = DeleteByFilter;
+model.GetByKey = GetByKey;
+model.GetByFilter = GetByFilter;
 
-model.connect = function(callback, errCallback){
+function connect(callback, errCallback){
     if(!errCallback){
         errCallback = calls.throwError;
     }
     r.connect(config.database).then(callback).error(errCallback);
-};
+}
 
-model.cursorToArray = cursorToArray;
 
 function cursorToArray(cursor, callback){
     cursor.toArray(function(error, results) {
@@ -24,8 +33,6 @@ function cursorToArray(cursor, callback){
         callback(results);
     });
 }
-
-model.cursorToField = cursorToField;
 
 function cursorToField(cursor, callback){
     cursor.toArray(function(error, results) {
@@ -38,8 +45,6 @@ function cursorToField(cursor, callback){
         }
     });
 }
-
-model.close = close;
 
 function close(conn){
     conn.close();
@@ -63,7 +68,8 @@ function runAndClose(conn, obj, closeFlag){
 	);
 }
 
-model.Connect = function(obj, conn, closeFlag){
+
+function Connect(obj, conn, closeFlag){
     var errCallback = calls.throwError;
 
 	if(!conn){
@@ -76,13 +82,10 @@ model.Connect = function(obj, conn, closeFlag){
 	else{
         runAndClose(conn, obj, closeFlag);
 	}
-};
+}
 
-model.Insert = Insert;
-function Insert(_table, _data, _extra, _callback, _errCallback){
-    if(!_extra){
-        _extra = {};
-    }
+
+function Operation(_table, _callback, _errCallback){
     if(!_callback){
         _callback = calls.noFun;
     }
@@ -90,64 +93,68 @@ function Insert(_table, _data, _extra, _callback, _errCallback){
         _errCallback = calls.throwError;
     }
     this.table = _table;
-    this.data = _data;
-    this.extra = _extra;
     this.callback = _callback;
     this.errCallback = _errCallback;
+}
+
+
+
+
+Insert.prototype = Object.create(Operation.prototype);
+Insert.prototype.constructor = Insert;
+
+function Insert(_table, _data, _extra, _callback, _errCallback){
+    Operation.call(this, _table, _callback, _errCallback);
+    if(!_extra){
+        _extra = {};
+    }
+    this.data = _data;
+    this.extra = _extra;
 }
 
 Insert.prototype.run = function (conn) {
     return r.table(this.table).insert(this.data, this.extra).run(conn);
 };
 
-model.DeleteByKey = DeleteByKey;
+
+
+
+DeleteByKey.prototype = Object.create(Operation.prototype);
+DeleteByKey.prototype.constructor = DeleteByKey;
+
 function DeleteByKey(_table, _key, _callback, _errCallback){
-    if(!_callback){
-        _callback = calls.noFun;
-    }
-    if(!_errCallback){
-        _errCallback = calls.throwError;
-    }
-    this.table = _table;
+    Operation.call(this, _table, _callback, _errCallback);
     this.key = _key;
-    this.callback = _callback;
-    this.errCallback = _errCallback;
 }
 
 DeleteByKey.prototype.run = function (conn) {
     return r.table(this.table).get(this.key).delete().run(conn);
 };
 
-model.DeleteByFilter = DeleteByFilter;
-function DeleteByFilter(_table, _filterStr, _callback, _errCallback){
-    if(!_callback){
-        _callback = calls.noFun;
-    }
-    if(!_errCallback){
-        _errCallback = calls.throwError;
-    }
-    this.table = _table;
-    this.filterStr = _filterStr;
-    this.callback = _callback;
-    this.errCallback = _errCallback;
+
+
+
+DeleteByFilter.prototype = Object.create(Operation.prototype);
+DeleteByFilter.prototype.constructor = DeleteByFilter;
+
+function DeleteByFilter(_table, _filter, _callback, _errCallback){
+    Operation.call(this, _table, _callback, _errCallback);
+    this.filter = _filter;
 }
 
 DeleteByFilter.prototype.run = function (conn) {
-    return r.table(this.table).filter( eval(this.filterStr)).delete().run(conn);
+    return r.table(this.table).filter( this.filter).delete().run(conn);
 };
 
-model.GetByKey = GetByKey;
+
+
+
+GetByKey.prototype = Object.create(Operation.prototype);
+GetByKey.prototype.constructor = GetByKey;
+
 function GetByKey(_table, _key, _callback, _errCallback){
-    if(!_callback){
-        _callback = calls.noFun;
-    }
-    if(!_errCallback){
-        _errCallback = calls.throwError;
-    }
-    this.table = _table;
+    Operation.call(this, _table, _callback, _errCallback);
     this.key = _key;
-    this.callback = _callback;
-    this.errCallback = _errCallback;
 }
 
 GetByKey.prototype.run = function (conn) {
@@ -155,20 +162,16 @@ GetByKey.prototype.run = function (conn) {
 };
 
 
-model.GetByFilter = GetByFilter;
-function GetByFilter(_table, _filterStr, _callback, _errCallback){
-    if(!_callback){
-        _callback = calls.noFun;
-    }
-    if(!_errCallback){
-        _errCallback = calls.throwError;
-    }
-    this.table = _table;
-    this.filterStr = _filterStr;
-    this.callback = _callback;
-    this.errCallback = _errCallback;
+
+
+GetByFilter.prototype = Object.create(Operation.prototype);
+GetByFilter.prototype.constructor = GetByFilter;
+
+function GetByFilter(_table, _filter, _callback, _errCallback){
+    Operation.call(this, _table, _callback, _errCallback);
+    this.filter = _filter;
 }
 
 GetByFilter.prototype.run = function (conn) {
-    return r.table(this.table).filter( eval(this.filterStr)).run(conn);
+    return r.table(this.table).filter( this.filter).run(conn);
 };

@@ -3,11 +3,30 @@
 'use strict';
 
 var wiki = require("./wikipost.js");
+var r = require('rethinkdb');
 
 var model = module.exports;
 model.createFilter = createFilter;
 model.FilterParser = FilterParser;
 model.AndFilter = AndFilter;
+model.rethinkFilter = rethinkFilter;
+model.codeHtml = codeHtml;
+
+function rethinkFilter(filterStr){
+	return eval(filterStr);
+}
+
+function codeHtml(str){
+	var map = {
+		'&': '&amp;',
+		'<': '&lt;',
+		'>': '&gt;',
+		'"': '&quot;',
+		"'": '&#039;'
+	};
+	return str.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
 
 function escape(str){
 	return str.replace(/\\/g, "\\\\")
@@ -19,6 +38,7 @@ function escape(str){
 function stringify(value){
 	if(typeof(value) == 'string'){
 		return "'" + escape(value) + "'";
+		// return "'" + value + "'";
 	}
 	else{
 		return value + "";
@@ -43,6 +63,21 @@ function noSQL_OR(expression){
 function noSQL_AND(expression){
 	return ".and(" + expression + ")";
 }
+
+var Ops = {};
+
+Ops.eqValue = function(columnName, value){
+	return "r.row(" + stringify(columnName) + ")"  + ".eq(" + stringify(value) + ")";
+};
+
+Ops.ltValue = function(columnName, value){
+	return "r.row(" + stringify(columnName) + ")"  + ".lt(" + stringify(value) + ")";
+};
+
+Ops.gtValue = function(columnName, value){
+	return "r.row(" + stringify(columnName) + ")"  + ".gt(" + stringify(value) + ")";
+};
+
 
 function FilterInfo(_userID, filterData){		// as got from client
 	this.filterInfo = {};
@@ -113,7 +148,19 @@ FilterParser.prototype.rowName = function(){
 };
 
 FilterParser.prototype.eqValue = function(value){
-	return "r.row(" + stringify(this.filterName()) + ")"  + ".eq(" + stringify(value) + ")";
+	return Ops.eqValue(this.filterName(), value);
+};
+
+FilterParser.prototype.ltValue = function(value){
+	return Ops.ltValue(this.filterName(), value);
+};
+
+FilterParser.prototype.gtValue = function(value){
+	return Ops.gtValue(this.filterName(), value);
+};
+
+FilterParser.prototype.genericOp = function(op, value){
+	return Ops[op](this.filterName(), value);
 };
 
 
@@ -167,12 +214,24 @@ MultipleFilter.prototype.toNoSQLQuery = function(){
 
 function AndFilter (filterArray){
 	this.filterArray = filterArray;
+	for(var i = 0; i < this.filterArray.length; i++) {
+		if(!this.filterArray[i].op){
+			this.filterArray[i].op = "eqValue";
+		}
+		else{
+			this.filterArray[i].op += "Value";
+		}
+	}
 }
 
 AndFilter.prototype.toNoSQLQuery = function(){
-	var query = new FilterParser(this.filterArray[0]).eqValue(this.filterArray[0].value);
+	var op = this.filterArray[0].op;
+	var value = this.filterArray[0].value;
+	var query = new FilterParser(this.filterArray[0]).genericOp(op, value);
 	for(var i = 1; i < this.filterArray.length; i++) {
-		query += noSQL_AND( new FilterParser(this.filterArray[i]).eqValue(this.filterArray[i].value) );
+		op = this.filterArray[i].op;
+		value = this.filterArray[i].value;
+		query += noSQL_AND( new FilterParser(this.filterArray[i]).genericOp(op, value) );
 	}
 	return query;
 };

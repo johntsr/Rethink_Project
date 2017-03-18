@@ -1,7 +1,7 @@
 var templates;
 var ID;
 var fieldParsers = [];
-var filterTitles = [];
+var filterIDs = [];
 
 function decodeHtml(html) {
     var txt = document.createElement("textarea");
@@ -18,13 +18,6 @@ function codeHtml(str){
 		"'": '&#039;'
 	};
 	return str.replace(/[&<>"']/g, function(m) { return map[m]; });
-}
-
-function deletePost(id) {
-    $.ajax({
-        type: 'DELETE',
-        url: '/profile/wikipost/delete/' + id
-    });
 }
 
 function hidePost(id){
@@ -46,7 +39,11 @@ function addWikiPost(originalTemplates, wikipost, filterTitle){
 
     var loadSelector = 'li.wikipost';
     var index = 1;
-	var content = { attrs: { id: wikipost.id }, text: { '.filter_title': decodeHtml(filterTitle), '.message': decodeHtml(wikipost.comment), '.user': decodeHtml(wikipost.user), '.title': wikipost.title, '.position': index}};
+	var content = { attrs: { id: wikipost.id }, text: { '.filter_title': decodeHtml(filterTitle),
+														'.message': decodeHtml(wikipost.comment),
+														'.user': decodeHtml(wikipost.user),
+														'.title': decodeHtml(wikipost.title),
+														'.position': index}};
 	var wikiPostTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
     $("#wikiposts").prepend( $(wikiPostTemplate) );
     fixListIndexes();
@@ -97,17 +94,12 @@ function getIDAsync(){
     });
 }
 
-function noWhiteSpace(str){
-    return str.replace(/\s/g, "_");
-}
-
-function addFilter(originalTemplates, filterTitle, _id){
+function addFilter(originalTemplates, filterTitle, filterID){
     var loadSelector = 'li.currentFilter';
-    var content = { attrs: { id: _id }, text: { '.filter_title': decodeHtml(filterTitle)} };
+    var content = { attrs: { id: filterID }, text: { '.filter_title': decodeHtml(filterTitle)} };
     var currentFilterTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
     $("#currentFilters").append( $(currentFilterTemplate) );
-
-    filterTitles.push(filterTitle);
+    filterIDs.push(filterID);
 }
 
 function getFiltersAsync(originalTemplates){
@@ -116,27 +108,26 @@ function getFiltersAsync(originalTemplates){
         url: '/profile/getfilters',
         data: {table: "Wiki"},
         success: function(data) {
-            var tempTitle = JSON.parse(data);
-            for(var i = 0; i < tempTitle.length; i++){
-                addFilter(originalTemplates, tempTitle[i]);
+            var filterData = JSON.parse(data);
+            for(var i = 0; i < filterData.length; i++){
+                addFilter(originalTemplates, filterData[i].title, filterData[i].id);
             }
         }
     });
 }
 
-function hideFilter(filterTitle, _id){
-    $('#' + _id).remove();
-    var index = filterTitles.indexOf(filterTitle);
-    filterTitles.splice(index, 1);
+function hideFilter(filterTitle, filterID){
+    $('#' + filterID).remove();
+    var index = filterIDs.indexOf(filterID);
+    filterIDs.splice(index, 1);
 }
 
-function deleteFilter(filterTitle){
+function deleteFilter(filterID){
     $.ajax({
         type: 'DELETE',
         url: '/profile/filters/delete/',
         data: {
-            table: "Wiki",
-            title: filterTitle
+            id: filterID
         }
     });
 }
@@ -174,23 +165,6 @@ function getFieldsInfoAsync(){
 $(document).ready(function () {
     getTemplatesAsync();
 
-    $('#wikiposts').on('click', '.deletePost', function (e) {
-        var postID = $(this).parent('li')[0].id;
-        deletePost(postID);
-    });
-
-    $('#wikipost_form').on('submit', function (event) {
-        event.preventDefault();
-        var sendData = new SendServerData();
-
-        var title = $('#wiki_post_title').val();
-        if(!title || title.trim().length === 0) {
-            sendData.triggerError('The title is required');
-        }
-        sendData.add("title", codeHtml(title));
-        sendData.send('/profile/addwikipost');
-    });
-
     $('#filter_form').on('submit', function (event) {
         event.preventDefault();
         var sendData = new SendServerData();
@@ -222,7 +196,7 @@ $(document).ready(function () {
 
     $('#currentFilters').on('click', '.deleteFilter', function (e) {
         var index = $(this).index() - 1;
-        deleteFilter(filterTitles[index]);
+        deleteFilter(filterIDs[index]);
     });
 
     $('#filterstuff').hide(0);

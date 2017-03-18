@@ -1,15 +1,3 @@
-function codeHtml(str){
-	var map = {
-		'&': '&amp;',
-		'<': '&lt;',
-		'>': '&gt;',
-		'"': '&quot;',
-		"'": '&#039;'
-	};
-	return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-}
-
-
 $(document).ready(function () {
 	$('#form_signin').on('submit', function (event) {
         event.preventDefault();
@@ -40,7 +28,7 @@ $(document).ready(function () {
 		$.ajax({
 	        type: 'POST',
 	        url: '/signin',
-	        data: {username: codeHtml(_username), password: codeHtml(_password)},
+	        data: {username: _username, password: _password},
 	        success: function(data) {
 	            var success = JSON.parse(data).success;
 				if( success){

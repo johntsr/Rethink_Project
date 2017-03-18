@@ -51,15 +51,6 @@ module.exports = function (app, passport) {
 		res.send(JSON.stringify({id: req.user.id}));
 	});
 
-    app.post('/profile/addwikipost', isLoggedIn, function (req, res) {
-		console.log("OH!");
-        var wikipost = new wiki.WikiPost();
-        wikipost.setProp("title", req.body.userData.title);
-        db.savePost(wikipost.getData());
-        console.log('');
-        console.log('');
-    });
-
     app.get('/profile/getwikiposts', isLoggedIn, function (req, res) {
         db.getPosts(function (result) {
             res.send(JSON.stringify(result));
@@ -75,11 +66,11 @@ module.exports = function (app, passport) {
     app.post('/profile/getfilters', isLoggedIn, function (req, res) {
         var table = req.body.table;
         db.getFilters(req.user.id, table, function (results) {
-            var titles = [];
+            var filterData = [];
             for (var i = 0; i < results.length; i++) {
-                titles.push(results[i].filterTitle);
+                filterData.push({title: results[i].filterTitle, id: results[i].id});
             }
-            res.send( JSON.stringify(titles) );
+            res.send( JSON.stringify(filterData) );
         });
     });
 
@@ -94,20 +85,9 @@ module.exports = function (app, passport) {
         });
     });
 
-	app.delete('/profile/wikipost/delete/:id', isLoggedIn, function(req,res){
-		var id = req.params.id;
-        console.log("Got delete, let's do it...");
-		db.deletePost(id);
-         res.json({
-            status: 'OK'
-        });
-	});
-
     app.delete('/profile/filters/delete', isLoggedIn, function(req,res){
-        var userID = req.user.id;
-        var table = req.body.table;
-        var title = req.body.title;
-		db.deleteFilter(userID, table, title, function (success, result) {
+        var filterID = req.body.id;
+		db.deleteFilter(filterID, function (success, result) {
             if (success) res.json({
                 status: 'OK'
             });

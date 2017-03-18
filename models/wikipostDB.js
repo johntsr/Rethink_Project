@@ -1,3 +1,6 @@
+/*jslint vars: true, plusplus: true, devel: true, nomen: true, indent: 4, maxerr: 50 */
+/* jshint node: true */
+'use strict';
 var model = module.exports;
 var calls = require("./callbacks.js");
 var broadcast = require("./wikibroadcast.js");
@@ -47,14 +50,14 @@ model.setup = function (io) {
     							var _title;
                                 if(filterInfoData){
     	                            model.listenFilter(filterInfoData);
-                                    _id = filterInfoData.userID;
+                                    _id = filterInfoData.id;
     								userID = filterInfoData.userID;
     								_title = filterInfoData.filterTitle;
     								io.emit('newFilter_' + userID, { id: _id, filterTitle: _title});
                                 }
     							else{
                                     filterInfoData = row.old_val;
-                                    _id = filterInfoData.userID;
+                                    _id = filterInfoData.id;
     								userID = filterInfoData.userID;
                                     _title = filterInfoData.filterTitle;
     								io.emit('deleteFilter_' + userID, {id: _id, filterTitle: _title});
@@ -67,7 +70,6 @@ model.setup = function (io) {
                             cursor.each(function(error, row) {
     							var wikiBroadcastData = row.new_val;
                                 if(wikiBroadcastData){
-                                    console.log("Send it finally!");
     								var data = {filterTitle: wikiBroadcastData.filterInfoData.filterTitle,
     											wikiData: wikiBroadcastData.broadcastData};
     								// NOTE: id[0]!
@@ -84,20 +86,14 @@ model.setup = function (io) {
 };
 
 model.getPosts = function (callback) {
+	var GetSeconds = 5;
+	var timestamp = Math.floor(new Date() / 1000) - GetSeconds;
+    var filter = new fparser.AndFilter([{name:'timestamp', value:timestamp, op:'lt'}]).toNoSQLQuery();
     w.Connect(
-        new w.GetByFilter(config.wiki, 'true', function(cursor) {w.cursorToArray(cursor, callback);} )
+        new w.GetByFilter(config.wiki, fparser.rethinkFilter(filter), function(cursor) {w.cursorToArray(cursor, callback);} )
     );
 };
 
-model.savePost = function (wikipost) {
-    w.Connect( new w.Insert(config.wiki, wikipost, calls.print("Done save post!")) );
-};
-
-model.deletePost = function (wikipost) {
-    w.Connect( new w.DeleteByKey(config.wiki, wikipost, calls.print("Done delete post!")) );
-};
-
-//NOTE
 model.addFilter = function (filterInfo, callback) {
     w.connect(
         function(conn) {
@@ -105,10 +101,9 @@ model.addFilter = function (filterInfo, callback) {
 		                                        {name:'table', value:filterInfo.table()},
 												{name:'query', value:filterInfo.query()},
 												{name:'filterTitle', value:filterInfo.filterTitle()}]).toNoSQLQuery();
-            r.table(config.filters).filter( eval(filter) ).isEmpty().run(conn).then(
+            r.table(config.filters).filter( fparser.rethinkFilter(filter) ).isEmpty().run(conn).then(
     			function(empty){
     				if( empty ){
-                        console.log(filterInfo.getData());
                         w.Connect(
                             new w.Insert(config.filters, filterInfo.getData(), {returnChanges: true},
                                 function(data){
@@ -126,22 +121,19 @@ model.addFilter = function (filterInfo, callback) {
     );
 };
 
-model.deleteFilter = function (userID, table, filterTitle, callback) {
-    var filter = new fparser.AndFilter([{name:'filterTitle', value:filterTitle},
-                                        {name:'userID', value:userID},
-                                        {name:'table', value:table}]).toNoSQLQuery();
-    w.Connect( new w.DeleteByFilter(config.filters, filter) );
+model.deleteFilter = function (filterID, callback) {
+	console.log("Delete filter: " + filterID);
+    w.Connect( new w.DeleteByKey(config.filters, filterID) );
 };
 
 model.getFilters = function (userID, table, callback) {
     var filter = new fparser.AndFilter([{name:'userID', value:userID},
                                         {name:'table', value:table}]).toNoSQLQuery();
     w.Connect(
-        new w.GetByFilter(config.filters, filter,  function (cursor){w.cursorToArray(cursor, callback);} )
+        new w.GetByFilter(config.filters, fparser.rethinkFilter(filter),  function (cursor){w.cursorToArray(cursor, callback);} )
     );
 };
 
-//NOTE
 model.listenFilter = function (filterInfoData) {
     var endOfDay = false;
     w.connect(
@@ -150,10 +142,9 @@ model.listenFilter = function (filterInfoData) {
                                     {name:'table', value:filterInfoData.table},
                                     {name:'query', value:filterInfoData.query},
                                     {name:'filterTitle', value:filterInfoData.filterTitle}]).toNoSQLQuery();
-    		r.table(config.filters).filter( eval(filter) ).changes().run(conn).then(
+    		r.table(config.filters).filter( fparser.rethinkFilter(filter) ).changes().run(conn).then(
     			function(cursor){
                     cursor.each(function(error, rowChange) {
-                        console.log("Check for deletion!");
                         if(!rowChange.new_val){
                             endOfDay = true;
                             cursor.close();
@@ -161,7 +152,7 @@ model.listenFilter = function (filterInfoData) {
                         }
          			});
     			}).error(calls.throwError);
-            r.table(filterInfoData.table).filter( eval(filterInfoData.query) ).changes().run(conn).then(function(cursor) {
+            r.table(filterInfoData.table).filter( fparser.rethinkFilter(filterInfoData.query) ).changes().run(conn).then(function(cursor) {
                cursor.each(function(error, rowChange) {
                    if(endOfDay){
                        cursor.close();
@@ -176,8 +167,7 @@ model.listenFilter = function (filterInfoData) {
 };
 
 model.prepareBroadcast = function (wikiBroadcast) {
-    calls.print("Found broadcast!");
-    w.Connect( new w.Insert(config.broadcast, wikiBroadcast.getData(), calls.print("broadcast ready!")) );
+    w.Connect( new w.Insert(config.broadcast, wikiBroadcast.getData()) );
 };
 
 model.getUserByID = function (userID, callback) {
@@ -187,23 +177,13 @@ model.getUserByID = function (userID, callback) {
     );
 };
 
-function codeHtml(str){
-	var map = {
-		'&': '&amp;',
-		'<': '&lt;',
-		'>': '&gt;',
-		'"': '&quot;',
-		"'": '&#039;'
-	};
-	return str.replace(/[&<>"']/g, function(m) { return map[m]; });
-}
 
 
 model.getUserByCredentials = function (username, password, callback) {
-    var filter = new fparser.AndFilter([{name:'username', value:codeHtml(username)},
-                                        {name:'password', value:codeHtml(password)}]).toNoSQLQuery();
+    var filter = new fparser.AndFilter([{name:'username', value:fparser.codeHtml(username)},
+                                        {name:'password', value:fparser.codeHtml(password)}]).toNoSQLQuery();
     w.Connect(
-        new w.GetByFilter(config.users, filter,
+        new w.GetByFilter(config.users, fparser.rethinkFilter(filter),
             function (cursor){ w.cursorToField(cursor, callback); },
             function (error){ callback(error); })
     );
@@ -213,7 +193,7 @@ model.signIn = function (_username, _password, callback){
     model.getUserByCredentials(_username, _password,
         function (error, user){
             if(!error && !user){
-                w.Connect( new w.Insert(config.users, {username: _username, password: _password}) );
+                w.Connect( new w.Insert(config.users, {username: fparser.codeHtml(_username), password: fparser.codeHtml(_password)}) );
                 callback(true);
             }
             else{
@@ -228,5 +208,5 @@ model.signOut = function (userID){
     w.Connect( new w.DeleteByKey(config.users, userID) );
 
     var filter = new fparser.FilterParser({name: 'userID'}).eqValue(userID);
-    w.Connect( new w.DeleteByFilter(config.filters, filter) );
+    w.Connect( new w.DeleteByFilter(config.filters, fparser.rethinkFilter(filter)) );
 };
