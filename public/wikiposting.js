@@ -194,8 +194,8 @@ $(document).ready(function () {
             });
     });
 
-    $('#currentFilters').on('click', '.deleteFilter', function (e) {
-        var index = $(this).index() - 1;
+    $('#currentFilters').on('click', '.currentFilter', function (e) {
+        var index = $(this).index();
         deleteFilter(filterIDs[index]);
     });
 

@@ -1,23 +1,36 @@
+// Commonly used functions-callbacks
+// Abbreviate them here to avoid duplication of code
+
 var model = module.exports;
 
-model.throwErrorCond =
-	function(err) {
-		if (err){
-			throw err;
-		}
-	};
+model.throwErrorCond 	= throwErrorCond;
+model.throwError 		= throwError;
+model.noFun 			= noFun;
+model.printOK 			= printOK;
+model.print 			= print;
 
-model.throwError =
-	function(err) {
+function throwErrorCond(err) {
+	'use strict';
+	if (err) {
 		throw err;
-	};
+	}
+}
 
-model.noFun =
-	function(err) {};
+function throwError(err) {
+	'use strict';
+	throw err;
+}
 
+function noFun(err) {
+	'use strict';
+}
 
-model.printOK =
-	function(err) { console.log("OK");};
+function printOK(err) {
+	'use strict';
+	console.log("OK");
+}
 
-model.print =
-	function(str) { console.log(str);};
+function print(str) {
+	'use strict';
+	console.log(str);
+}

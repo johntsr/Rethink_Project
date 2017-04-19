@@ -79,7 +79,7 @@ module.exports = function (app, passport) {
     });
 
 	app.post('/profile/addfilter', isLoggedIn, function (req, res) {
-		db.addFilter(filters.createFilter(req.user.id, req.body.userData),
+		db.addFilter(filters.createFilterInfo(req.user.id, req.body.userData),
         function(_success){
             res.send( JSON.stringify({success: _success}) );
         });

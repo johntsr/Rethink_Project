@@ -6,7 +6,7 @@ var calls = require("./callbacks.js");
 var broadcast = require("./wikibroadcast.js");
 var w = require("./rethinkwrap.js");
 var r = require('rethinkdb');
-var fparser = require('./filterparser');
+var fparser = require('./filterparser.js');
 var config = require('../config');
 
 
@@ -88,7 +88,7 @@ model.setup = function (io) {
 model.getPosts = function (callback) {
 	var GetSeconds = 5;
 	var timestamp = Math.floor(new Date() / 1000) - GetSeconds;
-    var filter = new fparser.AndFilter([{name:'timestamp', value:timestamp, op:'lt'}]).toNoSQLQuery();
+    var filter = fparser.AndExpressions([{name:'timestamp', value:timestamp, op:'<'}]).toNoSQLQuery();
     w.Connect(
         new w.GetByFilter(config.wiki, fparser.rethinkFilter(filter), function(cursor) {w.cursorToArray(cursor, callback);} )
     );
@@ -97,7 +97,7 @@ model.getPosts = function (callback) {
 model.addFilter = function (filterInfo, callback) {
     w.connect(
         function(conn) {
-			var filter = new fparser.AndFilter([{name:'userID', value:filterInfo.userID()},
+			var filter = fparser.AndExpressions([{name:'userID', value:filterInfo.userID()},
 		                                        {name:'table', value:filterInfo.table()},
 												{name:'query', value:filterInfo.query()},
 												{name:'filterTitle', value:filterInfo.filterTitle()}]).toNoSQLQuery();
@@ -127,7 +127,7 @@ model.deleteFilter = function (filterID, callback) {
 };
 
 model.getFilters = function (userID, table, callback) {
-    var filter = new fparser.AndFilter([{name:'userID', value:userID},
+    var filter = fparser.AndExpressions([{name:'userID', value:userID},
                                         {name:'table', value:table}]).toNoSQLQuery();
     w.Connect(
         new w.GetByFilter(config.filters, fparser.rethinkFilter(filter),  function (cursor){w.cursorToArray(cursor, callback);} )
@@ -138,7 +138,7 @@ model.listenFilter = function (filterInfoData) {
     var endOfDay = false;
     w.connect(
         function(conn) {
-            var filter = new fparser.AndFilter([{name:'userID', value:filterInfoData.userID},
+            var filter = fparser.AndExpressions([{name:'userID', value:filterInfoData.userID},
                                     {name:'table', value:filterInfoData.table},
                                     {name:'query', value:filterInfoData.query},
                                     {name:'filterTitle', value:filterInfoData.filterTitle}]).toNoSQLQuery();
@@ -180,8 +180,8 @@ model.getUserByID = function (userID, callback) {
 
 
 model.getUserByCredentials = function (username, password, callback) {
-    var filter = new fparser.AndFilter([{name:'username', value:fparser.codeHtml(username)},
-                                        {name:'password', value:fparser.codeHtml(password)}]).toNoSQLQuery();
+    var filter = fparser.AndExpressions([{name:'username', value:fparser.htmlSpecialChars(username)},
+                                        {name:'password', value:fparser.htmlSpecialChars(password)}]).toNoSQLQuery();
     w.Connect(
         new w.GetByFilter(config.users, fparser.rethinkFilter(filter),
             function (cursor){ w.cursorToField(cursor, callback); },
@@ -193,7 +193,7 @@ model.signIn = function (_username, _password, callback){
     model.getUserByCredentials(_username, _password,
         function (error, user){
             if(!error && !user){
-                w.Connect( new w.Insert(config.users, {username: fparser.codeHtml(_username), password: fparser.codeHtml(_password)}) );
+                w.Connect( new w.Insert(config.users, {username: fparser.htmlSpecialChars(_username), password: fparser.htmlSpecialChars(_password)}) );
                 callback(true);
             }
             else{
@@ -207,6 +207,6 @@ model.signIn = function (_username, _password, callback){
 model.signOut = function (userID){
     w.Connect( new w.DeleteByKey(config.users, userID) );
 
-    var filter = new fparser.FilterParser({name: 'userID'}).eqValue(userID);
+    var filter = fparser.FilterParser([{name: 'userID', value: userID}]).toNoSQLQuery();
     w.Connect( new w.DeleteByFilter(config.filters, fparser.rethinkFilter(filter)) );
 };

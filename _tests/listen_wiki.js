@@ -7,7 +7,7 @@ var wiki = require("../models/wikipost.js");
 var r = require('rethinkdb');
 var config = require('../config');
 var w = require("../models/rethinkwrap.js");
-var fparser = require('../models/filterparser');
+var fparser = require('../models/filterparser.js');
 var EventSource = require('eventsource');
 
 var url = 'https://stream.wikimedia.org/v2/stream/recentchange';
@@ -46,7 +46,7 @@ function saveToDB(){
 
 function deleteFromDB(){
 	var timestamp = Math.floor(new Date() / 1000) - DeleteSeconds;
-    var filter = new fparser.AndFilter([{name:'timestamp', value:timestamp, op:'lt'}]).toNoSQLQuery();
+    var filter = fparser.AndExpressions([{name:'timestamp', value:timestamp, op:'='}]).toNoSQLQuery();
 	w.Connect( new w.DeleteByFilter(config.wiki, fparser.rethinkFilter(filter),
 		 	function (){
 				console.log("Deleted!");
