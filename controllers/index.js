@@ -1,7 +1,8 @@
-var wiki = require('../models/wikipost');
-var db = require('../models/wikipostDB');
-var filters = require('../models/filterparser.js');
-var path = require('path');
+var wiki 	= require('../models/wikipost');
+var auth 	= require('../models/database/routingcalls/auth.js');
+var db 		= require('../models/database/routingcalls/profile.js');
+var filters = require('../models/filterparser/index.js');
+var path 	= require('path');
 
 module.exports = function (app, passport) {
 
@@ -29,7 +30,7 @@ module.exports = function (app, passport) {
     app.post('/signin', function(req, res) {
         var username = req.body.username;
         var password = req.body.password;
-		db.signIn(username, password,
+		auth.signIn(username, password,
             function(_success){
                 res.send( JSON.stringify({success: _success}) );
             }
@@ -39,9 +40,11 @@ module.exports = function (app, passport) {
 	app.post('/signout', function(req, res) {
         var userID = req.user.id;
 		req.logout();
-		db.signOut(userID);
+		auth.signOut(userID);
 		res.redirect('/login');
 	});
+
+
 
 	app.get('/profile', isLoggedIn, function (req, res) {
 		res.sendFile( path.resolve('views/profile.html') );

@@ -1,6 +1,6 @@
 // load all the things we need
 var LocalStrategy   = require('passport-local').Strategy;
-var db = require('../models/wikipostDB');
+var db = require('../models/database/routingcalls/auth.js');
 
 // expose this function to our app using module.exports
 module.exports = function(passport) {

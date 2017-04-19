@@ -7,7 +7,7 @@ var wiki = require("../models/wikipost.js");
 var r = require('rethinkdb');
 var config = require('../config');
 var w = require("../models/rethinkwrap.js");
-var fparser = require('../models/filterparser.js');
+var fparser = require('../models/filterparser/index.js');
 var EventSource = require('eventsource');
 
 var url = 'https://stream.wikimedia.org/v2/stream/recentchange';
