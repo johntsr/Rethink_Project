@@ -4,6 +4,7 @@ var fparser 		= require('../../filterparser/index.js');
 var config 			= require('../../../config');
 var calls 			= require("../../callbacks.js");
 var broadcast 		= require("../../broadcast.js");
+var sources 		= require('../../datasources/index.js');
 
 var model 			= module.exports;
 model.getPosts 		= getPosts;
@@ -16,10 +17,31 @@ function getPosts(callback) {
     'use strict';
 	var GetSeconds = 5;
 	var timestamp = Math.floor(new Date() / 1000) - GetSeconds;
-    var filter = fparser.AndExpressions([{name:'timestamp', value:timestamp, op:'<'}]).toNoSQLQuery();
-    w.Connect(
-        new w.GetByFilter(config.tables.wiki, fparser.rethinkFilter(filter), function(cursor) {w.cursorToArray(cursor, callback);} )
-    );
+
+    var dataSend = [];
+    var num = Object.keys(sources).length;
+    var count = 0;
+
+    var appendData = function(data){
+        dataSend.push.apply(dataSend, data);
+        count++;
+        if(count == num){
+            callback(dataSend);
+        }
+    };
+
+    var appendFromCursor = function(cursor) {
+        w.cursorToArray(cursor, appendData);
+    };
+
+	var filter = fparser.AndExpressions([{name:'timestamp', value:timestamp, op:'<'}]).toNoSQLQuery();
+	for (var tableName in sources) {
+		if (sources.hasOwnProperty(tableName)) {
+			w.Connect(
+				new w.GetByFilter(tableName, fparser.rethinkFilter(filter), appendFromCursor )
+			);
+		}
+	}
 }
 
 function addFilter(filterInfo, callback) {

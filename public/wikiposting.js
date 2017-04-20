@@ -8,15 +8,15 @@ var socket = io();
 var calls = {};
 
 calls.onNew = function(postInfo) {
-    addWikiPost(templates, postInfo.wikiData, postInfo.filterTitle);
+    addPost(templates, postInfo.data, postInfo.filterTitle);
 };
 
 calls.onDelete = function(post) {
-    hidePost(post.wikiData.id);
+    hidePost(post.data.id);
 };
 
 calls.onUpdate = function(postInfo) {
-    addWikiPost(templates, postInfo.wikiData, postInfo.filterTitle);
+    addPost(templates, postInfo.data, postInfo.filterTitle);
 };
 
 calls.newFilter = function(data) {
@@ -50,26 +50,26 @@ function hidePost(id){
 }
 
 function fixListIndexes(){
-    $('#wikiposts li').each(function() {
+    $('#posts li').each(function() {
         var i = $(this).index() + 1;
         $(this).find('.position').text( i );
     });
 }
 
-function addWikiPost(originalTemplates, wikipost, filterTitle){
+function addPost(originalTemplates, post, filterTitle){
     if(!filterTitle){
         filterTitle = '';
     }
 
-    var loadSelector = 'li.wikipost';
+    var loadSelector = 'li.post';
     var index = 1;
-	var content = { attrs: { id: wikipost.id }, text: { '.filter_title': decodeHtml(filterTitle),
-														'.message': decodeHtml(wikipost.comment),
-														'.user': decodeHtml(wikipost.user),
-														'.title': decodeHtml(wikipost.title),
+	var content = { attrs: { id: post.id }, text: { '.filter_title': decodeHtml(filterTitle),
+														'.message': decodeHtml(post.comment),
+														'.user': decodeHtml(post.user),
+														'.title': decodeHtml(post.title),
 														'.position': index}};
-	var wikiPostTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
-    $("#wikiposts").prepend( $(wikiPostTemplate) );
+	var postTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
+    $("#posts").prepend( $(postTemplate) );
     fixListIndexes();
 }
 
@@ -79,7 +79,7 @@ function getTemplatesAsync(){
         url: '/profile/templates',
         success: function(data) {
             templates = $.parseHTML(data);
-            getWikiPostsAsync();
+            getPostsAsync();
             getFieldsInfoAsync();
         }
     });
@@ -129,14 +129,14 @@ function deleteFilter(filterID){
     });
 }
 
-function getWikiPostsAsync(){
+function getPostsAsync(){
     $.ajax({
         type: 'GET',
-        url: '/profile/getwikiposts',
+        url: '/profile/getposts',
         success: function(data) {
-            var wikiposts = JSON.parse(data);
-            for (var i = 0; i < wikiposts.length; i++) {
-                addWikiPost(templates, wikiposts[i]);
+            var posts = JSON.parse(data);
+            for (var i = 0; i < posts.length; i++) {
+                addPost(templates, posts[i]);
             }
         }
     });

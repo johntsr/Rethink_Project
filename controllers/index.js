@@ -50,7 +50,7 @@ module.exports = function (app, passport) {
 		res.sendFile( path.resolve('views/profile.html') );
 	});
 
-    app.get('/profile/getwikiposts', isLoggedIn, function (req, res) {
+    app.get('/profile/getposts', isLoggedIn, function (req, res) {
         db.getPosts(function (result) {
             res.send(JSON.stringify(result));
         });

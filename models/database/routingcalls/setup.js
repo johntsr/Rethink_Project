@@ -67,13 +67,13 @@ function setup(io) {
                         r.table(config.tables.broadcast).changes().run(conn).then(function(cursor) {
                         // r.table(config.tables.broadcast).changes({squash: 1.0}).run(conn).then(function(cursor) {
                             cursor.each(function(error, row) {
-    							var wikiBroadcastData = row.new_val;
-                                if(wikiBroadcastData){
-    								var data = {filterTitle: wikiBroadcastData.filterInfoData.filterTitle,
-    											wikiData: wikiBroadcastData.broadcastData};
+    							var broadcastData = row.new_val;
+                                if(broadcastData){
+    								var data = {filterTitle: broadcastData.filterInfoData.filterTitle,
+    											data: broadcastData.broadcastData};
     								// NOTE: id[0]!
-                                    io.emit(wikiBroadcastData.emit + wikiBroadcastData.id[0], data);
-									w.Connect(new w.DeleteByKey(config.tables.broadcast, wikiBroadcastData.id), conn);
+                                    io.emit(broadcastData.emit + broadcastData.id[0], data);
+									w.Connect(new w.DeleteByKey(config.tables.broadcast, broadcastData.id), conn);
                                 }
                             });
                         }).error(calls.throwError);
