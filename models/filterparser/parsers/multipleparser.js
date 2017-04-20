@@ -1,5 +1,6 @@
 var generic 	= require("./genericparser.js");
 var db_help 	= require("../db_help.js");
+var config 		= require("../../../config.js");
 
 var model 		= module.exports;
 model.create	= create;
@@ -50,11 +51,12 @@ MultipleFilter.prototype.toNoSQLQuery = function(){
 	// so iterate over the "true" fields only
 	// and demand at least 1 of them (so, append them with 'OR')
 	var i = this.nextIndex();
-	choice = db_help.choiceName( this.filterName() , i);
+	var table = config.tables.wiki;
+	choice = db_help.choiceName(table, this.filterName() , i);
 	query += this.genericOp("=", choice );
 
 	for( i++; i < this.filter.value.length; i = this.nextIndex(i) ) {
-		choice = db_help.choiceName( this.filterName() , i);
+		choice = db_help.choiceName(table, this.filterName() , i);
 		query += db_help.noSQL_OR( this.genericOp("=", choice ) );
 	}
 

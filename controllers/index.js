@@ -1,4 +1,4 @@
-var wiki 	= require('../models/wikipost');
+var wiki 	= require('../models/datasources/wikipost.js');
 var auth 	= require('../models/database/routingcalls/auth.js');
 var db 		= require('../models/database/routingcalls/profile.js');
 var filters = require('../models/filterparser/index.js');
@@ -61,9 +61,7 @@ module.exports = function (app, passport) {
     });
 
     app.get('/profile/fieldsInfo', isLoggedIn, function (req, res) {
-        db.getPosts(function (result) {
-            res.send( JSON.stringify(wiki.FieldsInfo) );
-        });
+        res.send( JSON.stringify(wiki.FieldsInfo) );
     });
 
     app.post('/profile/getfilters', isLoggedIn, function (req, res) {

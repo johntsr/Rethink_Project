@@ -3,7 +3,7 @@
 'use strict';
 
 var calls = require('../models/callbacks.js');
-var wiki = require("../models/wikipost.js");
+var wiki = require("../models/datasources/wikipost.js");
 var r = require('rethinkdb');
 var config = require('../config');
 var w = require("../models/rethinkwrap.js");
@@ -30,13 +30,13 @@ eventSource.onerror = function (event) {
 eventSource.onmessage = function(event) {
 	if( PostsArray.length < Limit ){
 	    var streamInfo = JSON.parse(event.data);
-		var dbData = new wiki.WikiPost(streamInfo).getData();
+		var dbData = wiki.create(streamInfo).getData();
 		PostsArray.push(dbData);
 	}
 };
 
 function saveToDB(){
-	w.Connect( new w.Insert(config.wiki, PostsArray, {},
+	w.Connect( new w.Insert(config.tables.wiki, PostsArray, {},
 		 	function (){
 				PostsArray = [];
 				console.log("Inserted!");
@@ -47,7 +47,7 @@ function saveToDB(){
 function deleteFromDB(){
 	var timestamp = Math.floor(new Date() / 1000) - DeleteSeconds;
     var filter = fparser.AndExpressions([{name:'timestamp', value:timestamp, op:'='}]).toNoSQLQuery();
-	w.Connect( new w.DeleteByFilter(config.wiki, fparser.rethinkFilter(filter),
+	w.Connect( new w.DeleteByFilter(config.tables.wiki, fparser.rethinkFilter(filter),
 		 	function (){
 				console.log("Deleted!");
 			})

@@ -3,7 +3,7 @@ var w 				= require("../operations/index.js");
 var fparser 		= require('../../filterparser/index.js');
 var config 			= require('../../../config');
 var calls 			= require("../../callbacks.js");
-var broadcast 		= require("../../wikibroadcast.js");
+var broadcast 		= require("../../broadcast.js");
 
 var model 			= module.exports;
 model.getPosts 		= getPosts;
@@ -18,7 +18,7 @@ function getPosts(callback) {
 	var timestamp = Math.floor(new Date() / 1000) - GetSeconds;
     var filter = fparser.AndExpressions([{name:'timestamp', value:timestamp, op:'<'}]).toNoSQLQuery();
     w.Connect(
-        new w.GetByFilter(config.wiki, fparser.rethinkFilter(filter), function(cursor) {w.cursorToArray(cursor, callback);} )
+        new w.GetByFilter(config.tables.wiki, fparser.rethinkFilter(filter), function(cursor) {w.cursorToArray(cursor, callback);} )
     );
 }
 
@@ -30,11 +30,11 @@ function addFilter(filterInfo, callback) {
 		                                        {name:'table', value:filterInfo.table()},
 												{name:'query', value:filterInfo.query()},
 												{name:'filterTitle', value:filterInfo.filterTitle()}]).toNoSQLQuery();
-            r.table(config.filters).filter( fparser.rethinkFilter(filter) ).isEmpty().run(conn).then(
+            r.table(config.tables.filters).filter( fparser.rethinkFilter(filter) ).isEmpty().run(conn).then(
     			function(empty){
     				if( empty ){
                         w.Connect(
-                            new w.Insert(config.filters, filterInfo.getData(), {returnChanges: true},
+                            new w.Insert(config.tables.filters, filterInfo.getData(), {returnChanges: true},
                                 function(data){
                                     callback(data.inserted > 0);
                                 }
@@ -53,7 +53,7 @@ function addFilter(filterInfo, callback) {
 function deleteFilter(filterID, callback) {
     'use strict';
 	console.log("Delete filter: " + filterID);
-    w.Connect( new w.DeleteByKey(config.filters, filterID) );
+    w.Connect( new w.DeleteByKey(config.tables.filters, filterID) );
 }
 
 function getFilters(userID, table, callback) {
@@ -61,7 +61,7 @@ function getFilters(userID, table, callback) {
     var filter = fparser.AndExpressions([{name:'userID', value:userID},
                                         {name:'table', value:table}]).toNoSQLQuery();
     w.Connect(
-        new w.GetByFilter(config.filters, fparser.rethinkFilter(filter),  function (cursor){w.cursorToArray(cursor, callback);} )
+        new w.GetByFilter(config.tables.filters, fparser.rethinkFilter(filter),  function (cursor){w.cursorToArray(cursor, callback);} )
     );
 }
 
@@ -74,7 +74,7 @@ function listenFilter(filterInfoData) {
                                     {name:'table', value:filterInfoData.table},
                                     {name:'query', value:filterInfoData.query},
                                     {name:'filterTitle', value:filterInfoData.filterTitle}]).toNoSQLQuery();
-    		r.table(config.filters).filter( fparser.rethinkFilter(filter) ).changes().run(conn).then(
+    		r.table(config.tables.filters).filter( fparser.rethinkFilter(filter) ).changes().run(conn).then(
     			function(cursor){
                     cursor.each(function(error, rowChange) {
                         if(!rowChange.new_val){
@@ -91,7 +91,7 @@ function listenFilter(filterInfoData) {
                        conn.close();
                        return false;
                    }
-    			   prepareBroadcast(new broadcast.WikiBroadcast(filterInfoData, rowChange) );
+    			   prepareBroadcast(broadcast.create(config.tables.wiki, filterInfoData, rowChange) );
     			});
         	}).error(calls.throwError);
     	}
@@ -100,5 +100,5 @@ function listenFilter(filterInfoData) {
 
 function prepareBroadcast(wikiBroadcast) {
     'use strict';
-    w.Connect( new w.Insert(config.broadcast, wikiBroadcast.getData()) );
+    w.Connect( new w.Insert(config.tables.broadcast, wikiBroadcast.getData()) );
 }

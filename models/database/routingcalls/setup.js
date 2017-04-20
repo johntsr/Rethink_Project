@@ -2,7 +2,6 @@ var r               = require('rethinkdb');
 var w 				= require("../operations/index.js");
 var config 			= require('../../../config');
 var calls 			= require("../../callbacks.js");
-var broadcast 		= require("../../wikibroadcast.js");
 var profile 		= require("./profile.js");
 
 var model 			= module.exports;
@@ -19,11 +18,11 @@ function setup(io) {
                 console.log("Database already created...");
             }).finally(function() {
                 // Does the table exist?
-                r.table(config.wiki).limit(1).run(conn, function(error, cursor) {
+                r.table(config.tables.wiki).limit(1).run(conn, function(error, cursor) {
                     var promise;
                     if (error) {
                         console.log("Creating table...");
-                        promise = r.tableCreate(config.wiki).run(conn);
+                        promise = r.tableCreate(config.tables.wiki).run(conn);
                     } else {
                         promise = cursor.toArray();
                     }
@@ -32,7 +31,7 @@ function setup(io) {
                     promise.then(function(result) {
                         console.log("Setting up update listener...");
 
-                        r.table(config.filters).run(conn).then(function(cursor) {
+                        r.table(config.tables.filters).run(conn).then(function(cursor) {
                             cursor.toArray(function(error, filters) {
                                 for(var i = 0; i < filters.length; i++){
                                     profile.listenFilter( filters[i] );
@@ -40,7 +39,7 @@ function setup(io) {
                             });
                         }).error(calls.throwError);
 
-                        r.table(config.filters).changes().run(conn).then(function(cursor) {
+                        r.table(config.tables.filters).changes().run(conn).then(function(cursor) {
                             cursor.each(function(error, row) {
     							var filterInfoData = row.new_val;
     							var userID;
@@ -63,8 +62,8 @@ function setup(io) {
                             });
                         }).error(calls.throwError);
 
-                        r.table(config.broadcast).changes().run(conn).then(function(cursor) {
-                        // r.table(config.broadcast).changes({squash: 1.0}).run(conn).then(function(cursor) {
+                        r.table(config.tables.broadcast).changes().run(conn).then(function(cursor) {
+                        // r.table(config.tables.broadcast).changes({squash: 1.0}).run(conn).then(function(cursor) {
                             cursor.each(function(error, row) {
     							var wikiBroadcastData = row.new_val;
                                 if(wikiBroadcastData){
@@ -72,7 +71,7 @@ function setup(io) {
     											wikiData: wikiBroadcastData.broadcastData};
     								// NOTE: id[0]!
                                     io.emit(wikiBroadcastData.emit + wikiBroadcastData.id[0], data);
-									w.Connect(new w.DeleteByKey(config.broadcast, wikiBroadcastData.id), conn);
+									w.Connect(new w.DeleteByKey(config.tables.broadcast, wikiBroadcastData.id), conn);
                                 }
                             });
                         }).error(calls.throwError);

@@ -1,5 +1,5 @@
 var r		 			= require('rethinkdb');
-var wiki	 			= require('../wikipost.js');
+var sources	 			= require('../datasources/index.js');
 
 var model 				= module.exports;
 model.rethinkFilter 	= rethinkFilter;
@@ -53,11 +53,11 @@ function stringify(value){
 
 // return the "index"-th value of "fieldName"
 // eg. choices = {R, G, B}, choiceName("color", 0) = R
-function choiceName(fieldName, choiceIndex){
+function choiceName(table, fieldName, choiceIndex){
 	'use strict';
-	for (var i = 0; i < wiki.FieldsInfo.length; i++) {			// iterate over the information array of ALL fields
-		if( wiki.FieldsInfo[i].name === fieldName  ){			// find my slot in the array
-			return wiki.FieldsInfo[i].choices[choiceIndex];		// return the appropriate value
+	for (var i = 0; i < sources[table].FieldsInfo.length; i++) {			// iterate over the information array of ALL fields
+		if( sources[table].FieldsInfo[i].name === fieldName  ){			// find my slot in the array
+			return sources[table].FieldsInfo[i].choices[choiceIndex];	// return the appropriate value
 		}
 	}
 	return "BAD choiceName() call: fieldName = " + stringify(fieldName) + " , choiceIndex = " + choiceIndex;

@@ -1,6 +1,3 @@
-/*jslint vars: true, plusplus: true, devel: true, nomen: true, indent: 4, maxerr: 50 */
-/* jshint node: true */
-
 var boolParser 	= require("./parsers/boolparser.js");
 var multiParser = require("./parsers/multipleparser.js");
 var db_help 	= require("./db_help.js");
