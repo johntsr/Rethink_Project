@@ -133,11 +133,11 @@ BoolField.prototype.pushData = function(data){
 	}
 };
 
-BoolField.prototype.showChoices = function(originalTemplates){
+BoolField.prototype.showChoices = function(originalTemplates, tableName){
 	var loadSelector = 'li.createFilter[title="boolean"]';
 	var content = { attrs: { id: this.fieldName() }, text: { '.message': this.fieldMessage() }};
 	var boolFieldTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
-    $("#createFilters").append( $(boolFieldTemplate) );
+    $("#createFilters_" + tableName).append( $(boolFieldTemplate) );
 };
 
 
@@ -171,7 +171,7 @@ MultipleField.prototype.pushData = function(data){
 	this.storeFilterData(data, myData);
 };
 
-MultipleField.prototype.showChoices = function(originalTemplates){
+MultipleField.prototype.showChoices = function(originalTemplates, tableName){
 	var loadSelector = 'li.createFilter[title="multiple"]';
 	var content = { attrs: { id: this.fieldName() }, text: { '.message': this.fieldMessage() }};
 	var multipleFieldTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
@@ -191,5 +191,5 @@ MultipleField.prototype.showChoices = function(originalTemplates){
 	$('#list_choice_template', multipleFieldTemplate).remove();
 
 	$(multipleFieldTemplate).append( $(choiceTemplate) );
-    $("#createFilters").append( $(multipleFieldTemplate) );
+    $("#createFilters_" + tableName).append( $(multipleFieldTemplate) );
 };

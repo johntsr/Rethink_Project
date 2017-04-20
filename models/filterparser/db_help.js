@@ -55,9 +55,10 @@ function stringify(value){
 // eg. choices = {R, G, B}, choiceName("color", 0) = R
 function choiceName(table, fieldName, choiceIndex){
 	'use strict';
-	for (var i = 0; i < sources[table].FieldsInfo.length; i++) {			// iterate over the information array of ALL fields
-		if( sources[table].FieldsInfo[i].name === fieldName  ){			// find my slot in the array
-			return sources[table].FieldsInfo[i].choices[choiceIndex];	// return the appropriate value
+	var tableInfo = sources[table];
+	for (var i = 0; i < tableInfo.FieldsInfo.length; i++) {			// iterate over the information array of ALL fields
+		if( tableInfo.FieldsInfo[i].name === fieldName ){			// find my slot in the array
+			return tableInfo.FieldsInfo[i].choices[choiceIndex];	// return the appropriate value
 		}
 	}
 	return "BAD choiceName() call: fieldName = " + stringify(fieldName) + " , choiceIndex = " + choiceIndex;

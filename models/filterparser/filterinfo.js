@@ -6,8 +6,9 @@ var model 		= module.exports;
 model.create 	= create;
 
 // create a "FilterParser" based on a user "option"
-function createFilterParser(filter){
+function createFilterParser(table, filter){
 	'use strict';
+	filter.table = table;
 	switch ( filter.name ) {
 		case "bot": return boolParser.create(filter);
 		case "type": return multiParser.create(filter);
@@ -46,10 +47,10 @@ function FilterInfo(_userID, filterData){
 	// so, first apply the expression (column constraint)
 	// and, in the loop, append the rest of the expression with an 'AND'
 
-	var partQuery = createFilterParser(filters[0]).toNoSQLQuery();
+	var partQuery = createFilterParser(this.table(), filters[0]).toNoSQLQuery();
 	this.appendQuery(partQuery);
 	for(var i = 1; i < filters.length; i++){
-		partQuery = db_help.noSQL_AND(createFilterParser(filters[i]).toNoSQLQuery());
+		partQuery = db_help.noSQL_AND(createFilterParser(this.table(), filters[i]).toNoSQLQuery());
 		this.appendQuery(partQuery);
 	}
 }

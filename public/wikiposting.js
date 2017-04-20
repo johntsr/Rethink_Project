@@ -1,7 +1,31 @@
 var templates;
 var ID;
-var fieldParsers = [];
+var fieldParsers = {};
 var filterIDs = [];
+var prevSelected = null;
+var socket = io();
+
+var calls = {};
+
+calls.onNew = function(postInfo) {
+    addWikiPost(templates, postInfo.wikiData, postInfo.filterTitle);
+};
+
+calls.onDelete = function(post) {
+    hidePost(post.wikiData.id);
+};
+
+calls.onUpdate = function(postInfo) {
+    addWikiPost(templates, postInfo.wikiData, postInfo.filterTitle);
+};
+
+calls.newFilter = function(data) {
+    addFilter(templates, data.filterTitle, data.id);
+};
+
+calls.deleteFilter = function(data) {
+    hideFilter(data.filterTitle, data.id);
+};
 
 function decodeHtml(html) {
     var txt = document.createElement("textarea");
@@ -55,41 +79,8 @@ function getTemplatesAsync(){
         url: '/profile/templates',
         success: function(data) {
             templates = $.parseHTML(data);
-            getIDAsync();
             getWikiPostsAsync();
             getFieldsInfoAsync();
-        }
-    });
-}
-
-function getIDAsync(){
-    var socket = io();
-    $.ajax({
-        type: 'GET',
-        url: '/profile/id',
-        success: function(data) {
-            ID = JSON.parse(data).id;
-            socket.on('newWiki_' + ID, function(wikipostInfo) {
-                addWikiPost(templates, wikipostInfo.wikiData, wikipostInfo.filterTitle);
-        	});
-
-        	socket.on('deleteWiki_' + ID, function(wikipost) {
-                hidePost(wikipost.wikiData.id);
-            });
-
-        	socket.on('updateWiki_' + ID, function(wikipostInfo) {
-        		addWikiPost(templates, wikipostInfo.wikiData, wikipostInfo.filterTitle);
-            });
-
-            socket.on('newFilter_' + ID, function(data) {
-                addFilter(templates, data.filterTitle, data.id);
-        	});
-
-        	socket.on('deleteFilter_' + ID, function(data) {
-                hideFilter(data.filterTitle, data.id);
-            });
-
-            getFiltersAsync(templates);
         }
     });
 }
@@ -102,11 +93,11 @@ function addFilter(originalTemplates, filterTitle, filterID){
     filterIDs.push(filterID);
 }
 
-function getFiltersAsync(originalTemplates){
+function getFiltersAsync(originalTemplates, table){
     $.ajax({
         type: 'POST',
         url: '/profile/getfilters',
-        data: {table: "Wiki"},
+        data: {table: table},
         success: function(data) {
             var filterData = JSON.parse(data);
             for(var i = 0; i < filterData.length; i++){
@@ -151,19 +142,64 @@ function getFieldsInfoAsync(){
             type: 'GET',
             url: '/profile/fieldsInfo',
             success: function(data) {
-                var fields = JSON.parse(data);
-                for(var i = 0; i < fields.length; i++){
-                    var temp = createFieldParser(fields[i]);
-                    temp.showChoices(templates);
-                    fieldParsers.push(temp);
-                }
+                data = JSON.parse(data);
+                ID = data.id;
+                var tableInfo = data.tableInfo;
+
+                socket.on('newFilter_' + ID, calls.newFilter);
+                socket.on('deleteFilter_' + ID, calls.deleteFilter);
+
+				for (var tableName in tableInfo) {
+					var fields = tableInfo[tableName];
+                    setupTable(tableName, fields);
+				}
             }
         });
     });
 }
 
+function setupTable(tableName, fields){
+    socket.on('new' + tableName + '_' + ID, calls.onNew);
+    socket.on('delete' + tableName + '_' + ID, calls.onDelete);
+    socket.on('update' + tableName + '_' + ID, calls.onUpdate);
+
+    getFiltersAsync(templates, tableName);
+    setupFilterPanel(tableName);
+    setupFilterParsers(tableName, fields);
+}
+
+function setupFilterPanel(tableName){
+    $('#dbTables').append($("<option></option>").attr("value",tableName).text(tableName));
+
+    var loadSelector = '#createFiltersTemplate';
+    var content = { attrs: { id: "createFilters_" +  tableName} };
+    var tableTemplate = loadTemplateTo(templates, loadSelector, content);
+    $("#createFilters").append( $(tableTemplate) );
+    $("#createFilters_" +  tableName).hide(0);
+}
+
+function setupFilterParsers(tableName, fields){
+    fieldParsers[tableName] = [];
+    for(var i = 0; i < fields.length; i++){
+        var temp = createFieldParser(fields[i]);
+        temp.showChoices(templates, tableName);
+        fieldParsers[tableName].push(temp);
+    }
+}
+
 $(document).ready(function () {
     getTemplatesAsync();
+
+    $('#dbTables').on('click', function (event) {
+        event.preventDefault();
+
+        if(prevSelected && prevSelected !== $('#dbTables').val()){
+            $("#createFilters_" +  prevSelected).toggle("fast");
+        }
+        $("#createFilters_" +  $('#dbTables').val()).toggle("fast");
+
+        prevSelected = $('#dbTables').val();
+    });
 
     $('#filter_form').on('submit', function (event) {
         event.preventDefault();
@@ -174,10 +210,12 @@ $(document).ready(function () {
             sendData.triggerError('The title is required');
         }
         sendData.add("filterTitle", codeHtml(title));
-        sendData.add("table", "Wiki");
 
-        for (var i = 0; i < fieldParsers.length; i++) {
-            fieldParsers[i].pushData(sendData);
+        var table = $('#dbTables').val();
+        sendData.add("table", table);
+
+        for (var i = 0; i < fieldParsers[table].length; i++) {
+            fieldParsers[table][i].pushData(sendData);
         }
 
         sendData.send('/profile/addfilter',

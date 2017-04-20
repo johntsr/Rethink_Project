@@ -22,6 +22,12 @@ GenericParser.prototype.filterName = function(){
 	return this.filter.name;
 };
 
+// get column name
+GenericParser.prototype.filterTable = function(){
+	'use strict';
+	return this.filter.table;
+};
+
 // create a constraint-string for this column
 GenericParser.prototype.genericOp = function(opSymbol, value){
 	'use strict';

@@ -1,4 +1,4 @@
-var wiki 	= require('../models/datasources/wikipost.js');
+var sources = require('../models/datasources/index.js');
 var auth 	= require('../models/database/routingcalls/auth.js');
 var db 		= require('../models/database/routingcalls/profile.js');
 var filters = require('../models/filterparser/index.js');
@@ -50,10 +50,6 @@ module.exports = function (app, passport) {
 		res.sendFile( path.resolve('views/profile.html') );
 	});
 
-	app.get('/profile/id', isLoggedIn, function (req, res) {
-		res.send(JSON.stringify({id: req.user.id}));
-	});
-
     app.get('/profile/getwikiposts', isLoggedIn, function (req, res) {
         db.getPosts(function (result) {
             res.send(JSON.stringify(result));
@@ -61,7 +57,15 @@ module.exports = function (app, passport) {
     });
 
     app.get('/profile/fieldsInfo', isLoggedIn, function (req, res) {
-        res.send( JSON.stringify(wiki.FieldsInfo) );
+		var tableInfo = {};
+		for (var tableName in sources) {
+			if (sources.hasOwnProperty(tableName)) {
+				tableInfo[tableName] = sources[tableName].FieldsInfo;
+			}
+		}
+
+        var response = { "tableInfo": tableInfo, id: req.user.id};
+        res.send( JSON.stringify(response) );
     });
 
     app.post('/profile/getfilters', isLoggedIn, function (req, res) {
