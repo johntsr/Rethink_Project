@@ -20,7 +20,7 @@ calls.onUpdate = function(postInfo) {
 };
 
 calls.newFilter = function(data) {
-    addFilter(templates, data.filterTitle, data.id);
+    addFilter(templates, data.filterTitle, data.id, data.table);
 };
 
 calls.deleteFilter = function(data) {
@@ -85,9 +85,15 @@ function getTemplatesAsync(){
     });
 }
 
-function addFilter(originalTemplates, filterTitle, filterID){
+function addFilter(originalTemplates, filterTitle, filterID, filterTable){
     var loadSelector = 'li.currentFilter';
-    var content = { attrs: { id: filterID }, text: { '.filter_title': decodeHtml(filterTitle)} };
+    var content = {
+        attrs: { id: filterID },
+        text: {
+            '.filter_title': decodeHtml(filterTitle),
+            '.filter_table': "(source: " + decodeHtml(filterTable) + ")",
+        }
+    };
     var currentFilterTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
     $("#currentFilters").append( $(currentFilterTemplate) );
     filterIDs.push(filterID);
@@ -101,7 +107,7 @@ function getFiltersAsync(originalTemplates, table){
         success: function(data) {
             var filterData = JSON.parse(data);
             for(var i = 0; i < filterData.length; i++){
-                addFilter(originalTemplates, filterData[i].title, filterData[i].id);
+                addFilter(originalTemplates, filterData[i].title, filterData[i].id, table);
             }
         }
     });

@@ -50,14 +50,16 @@ function setup(io) {
                                     _id = filterInfoData.id;
     								userID = filterInfoData.userID;
     								_title = filterInfoData.filterTitle;
-    								io.emit('newFilter_' + userID, { id: _id, filterTitle: _title});
+									_table = filterInfoData.table;
+    								io.emit('newFilter_' + userID, { id: _id, filterTitle: _title, table: _table});
                                 }
     							else{
                                     filterInfoData = row.old_val;
                                     _id = filterInfoData.id;
     								userID = filterInfoData.userID;
                                     _title = filterInfoData.filterTitle;
-    								io.emit('deleteFilter_' + userID, {id: _id, filterTitle: _title});
+									_table = filterInfoData.table;
+    								io.emit('deleteFilter_' + userID, {id: _id, filterTitle: _title, table: _table});
     							}
                             });
                         }).error(calls.throwError);

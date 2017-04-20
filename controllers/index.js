@@ -73,7 +73,7 @@ module.exports = function (app, passport) {
         db.getFilters(req.user.id, table, function (results) {
             var filterData = [];
             for (var i = 0; i < results.length; i++) {
-                filterData.push({title: results[i].filterTitle, id: results[i].id});
+                filterData.push({title: results[i].filterTitle, id: results[i].id, table: table});
             }
             res.send( JSON.stringify(filterData) );
         });
