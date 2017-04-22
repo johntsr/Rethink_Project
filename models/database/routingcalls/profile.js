@@ -138,7 +138,8 @@ function listenFilter(filterInfoData) {
                         	conn.close();
                         	return false;
                        	}
-                        var data = { filterData: filterInfoData, postData: rowChange};
+						var postID = ( rowChange.new_val != null )? rowChange.new_val.id : rowChange.old_val.id;
+                        var data = { filterData: filterInfoData, postData: rowChange, id: postID};
                         w.Connect( new w.Insert(config.tables.broadcast, data), conn, false );
     				});
         		}
