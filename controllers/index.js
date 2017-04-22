@@ -73,7 +73,7 @@ module.exports = function (app, passport) {
         db.getFilters(req.user.id, table, function (results) {
             var filterData = [];
             for (var i = 0; i < results.length; i++) {
-                filterData.push({title: results[i].filterTitle, id: results[i].id, table: table});
+                filterData.push({title: results[i].filterTitle, id: results[i].id, status: results[i].status, table: table});
             }
             res.send( JSON.stringify(filterData) );
         });
@@ -93,6 +93,30 @@ module.exports = function (app, passport) {
     app.delete('/profile/filters/delete', isLoggedIn, function(req,res){
         var filterID = req.body.id;
 		db.deleteFilter(filterID, function (success, result) {
+            if (success) res.json({
+                status: 'OK'
+            });
+            else res.json({
+                status: 'Error'
+            });
+        });
+	});
+
+	app.post('/profile/filters/pause', isLoggedIn, function(req,res){
+        var filterID = req.body.id;
+		db.pauseFilter(filterID, function (success, result) {
+            if (success) res.json({
+                status: 'OK'
+            });
+            else res.json({
+                status: 'Error'
+            });
+        });
+	});
+
+	app.post('/profile/filters/play', isLoggedIn, function(req,res){
+        var filterID = req.body.id;
+		db.playFilter(filterID, function (success, result) {
             if (success) res.json({
                 status: 'OK'
             });

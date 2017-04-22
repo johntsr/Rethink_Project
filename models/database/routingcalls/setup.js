@@ -3,6 +3,7 @@ var w 				= require("../operations/index.js");
 var config 			= require('../../../config');
 var calls 			= require("../../callbacks.js");
 var profile 		= require("./profile.js");
+var filters 		= require("../../filterparser/index.js");
 
 var model 			= module.exports;
 model.setup 		= setup;
@@ -48,20 +49,21 @@ function emitFilters(io, conn){
 				emitData = { id: filterInfoData.id};
 			}
 			else{
-				
+				filterInfoData = row.new_val;
+				emitType = 'statusFilter_';
+				emitData = { id: filterInfoData.id, status: filterInfoData.status};
+
+				if( filterInfoData.status === filters.filterStatus.PLAY ){
+					profile.listenFilter(filterInfoData);
+				}
 			}
 
-			if( !emptyObject(emitData) ){
-				var userID = filterInfoData.userID;
-				io.emit(emitType + userID, emitData);
-			}
+			var userID = filterInfoData.userID;
+			io.emit(emitType + userID, emitData);
 		});
 	}).error(calls.throwError);
 }
 
-function emptyObject(obj) {
-  return !Object.keys(obj).length;
-}
 
 function emitPosts(io, conn){
     r.table(config.tables.broadcast).changes().run(conn).then(function(cursor) {

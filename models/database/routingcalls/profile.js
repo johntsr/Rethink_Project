@@ -12,6 +12,8 @@ model.addFilter 	= addFilter;
 model.deleteFilter 	= deleteFilter;
 model.getFilters 	= getFilters;
 model.listenFilter 	= listenFilter;
+model.pauseFilter 	= pauseFilter;
+model.playFilter 	= playFilter;
 
 function getPosts(callback) {
     'use strict';
@@ -118,22 +120,12 @@ function listenFilter(filterInfoData) {
     			function(cursor){
                     cursor.each(function(error, rowChange) {
 						var row = rowChange.new_val;
-						switch ( row.status ) {
-							case fparser.filterStatus.PLAY:
-
-								break;
-							case fparser.filterStatus.PAUSE:
-
-								break;
-							case fparser.filterStatus.DELETE:
-								endOfDay.set();
-								cursor.close();
-								w.Connect( new w.DeleteByKey(config.tables.filters, row.id) );
-								return false;				// stop listening for changes!
-							default:
-								break;
+						endOfDay.set();
+						cursor.close();
+						if( row.status === fparser.filterStatus.DELETE ){
+							w.Connect( new w.DeleteByKey(config.tables.filters, row.id), conn, false );
 						}
-
+						return false;				// stop listening for changes!
          			});
     			}
 			).error(calls.throwError);
@@ -141,11 +133,11 @@ function listenFilter(filterInfoData) {
 			r.table(filterInfoData.table).filter( fparser.rethinkFilter(filterInfoData.query) ).changes().run(conn).then(
                 function(cursor) {
                    cursor.each(function(error, rowChange) {
-                       if( endOfDay.value() ){
-                           cursor.close();
-                           conn.close();
-                           return false;
-                       }
+                       	if( endOfDay.value() ){
+                        	cursor.close();
+                        	conn.close();
+                        	return false;
+                       	}
 						prepareBroadcast(broadcast.create(config.tables.wiki, filterInfoData, rowChange) );
     				});
         		}

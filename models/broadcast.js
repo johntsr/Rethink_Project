@@ -16,13 +16,13 @@ function Broadcast(_table, _filterInfoData, _wikiPostChange){
 	this.data.id = [];
 
 	if ((_wikiPostChange.new_val !== null) && (_wikiPostChange.old_val !== null)) {           // update post
-		this.data.emit = 'update' + this.table + '_';
+		this.data.emit = 'update' + this.data.table + '_';
 		this.data.broadcastData = _wikiPostChange.new_val;
 	} else if ((_wikiPostChange.new_val !== null) && (_wikiPostChange.old_val === null)) {    // new post
-		this.data.emit = 'new' + this.table + '_';
+		this.data.emit = 'new' + this.data.table + '_';
 		this.data.broadcastData = _wikiPostChange.new_val;
 	} else if ((_wikiPostChange.new_val === null) && (_wikiPostChange.old_val !== null)) {    // deleted post
-		this.data.emit = 'delete' + this.table + '_';
+		this.data.emit = 'delete' + this.data.table + '_';
 		this.data.broadcastData = _wikiPostChange.old_val;
 	}
 	this.data.id = [_filterInfoData.userID, this.data.broadcastData.id];
