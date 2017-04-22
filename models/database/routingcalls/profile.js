@@ -102,13 +102,17 @@ function getFilters(userID, table, callback) {
     var filter = fparser.AndExpressions([{name:'userID', value:userID},
                                         {name:'table', value:table}]).toNoSQLQuery();
     w.Connect(
-        new w.GetByFilter(config.tables.filters, fparser.rethinkFilter(filter),  function (cursor){w.cursorToArray(cursor, callback);} )
+        new w.GetByFilter(config.tables.filters, fparser.rethinkFilter(filter),
+            function (cursor){
+                w.cursorToArray(cursor, callback);
+            }
+        )
     );
 }
 
 function listenFilter(filterInfoData) {
     'use strict';
-    var endOfDay = new ControlFlag();
+    var stopListen = false;
     w.connect(
         function(conn) {
             var filter = fparser.AndExpressions([{name:'userID', value:filterInfoData.userID},
@@ -119,9 +123,9 @@ function listenFilter(filterInfoData) {
 			r.table(config.tables.filters).filter( fparser.rethinkFilter(filter) ).changes().run(conn).then(
     			function(cursor){
                     cursor.each(function(error, rowChange) {
+						stopListen = true;
+						w.close(cursor);
 						var row = rowChange.new_val;
-						endOfDay.set();
-						cursor.close();
 						if( row.status === fparser.filterStatus.DELETE ){
 							w.Connect( new w.DeleteByKey(config.tables.filters, row.id), conn, false );
 						}
@@ -133,12 +137,12 @@ function listenFilter(filterInfoData) {
 			r.table(filterInfoData.table).filter( fparser.rethinkFilter(filterInfoData.query) ).changes().run(conn).then(
                 function(cursor) {
                    cursor.each(function(error, rowChange) {
-                       	if( endOfDay.value() ){
-                        	cursor.close();
-                        	conn.close();
+                       	if( stopListen ){
+                        	w.close(cursor);
+                        	w.close(conn);
                         	return false;
                        	}
-						var postID = ( rowChange.new_val != null )? rowChange.new_val.id : rowChange.old_val.id;
+						var postID = ( rowChange.new_val !== null )? rowChange.new_val.id : rowChange.old_val.id;
                         var data = { filterData: filterInfoData, postData: rowChange, id: postID};
                         w.Connect( new w.Insert(config.tables.broadcast, data), conn, false );
     				});
@@ -147,30 +151,3 @@ function listenFilter(filterInfoData) {
     	}
     );
 }
-
-
-
-
-function ControlFlag(){
-    'use strict';
-    this.flag = false;
-}
-
-ControlFlag.prototype.condSet = function(assertExpr) {
-	if( !assertExpr ){
-		this.flag = true;
-	}
-    return this.flag;
-};
-
-ControlFlag.prototype.set = function() {
-	this.flag = true;
-};
-
-ControlFlag.prototype.reset = function() {
-	this.flag = false;
-};
-
-ControlFlag.prototype.value = function(){
-    return this.flag;
-};

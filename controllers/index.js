@@ -11,13 +11,13 @@ module.exports = function (app, passport) {
 	});
 
 	app.get('/login', function (req, res) {
-		res.render(path.resolve('views/login'), {
+		res.render(path.resolve('public/views/login'), {
         message: req.flash('message')
     	} );
 	});
 
 	app.post('/login', passport.authenticate('local-login', {
-		successRedirect : '/profile',	// redirect to the secure profile section
+		successRedirect : '/profile',	 // redirect to the secure profile section
 		failureRedirect : '/login', 	// redirect back to the signup page if there is an error
         failureFlash: true
         }));
@@ -47,7 +47,7 @@ module.exports = function (app, passport) {
 
 
 	app.get('/profile', isLoggedIn, function (req, res) {
-		res.sendFile( path.resolve('views/profile.html') );
+		res.sendFile( path.resolve( path.resolve('public/views/profile.html')) );
 	});
 
     app.get('/profile/getposts', isLoggedIn, function (req, res) {
@@ -80,7 +80,7 @@ module.exports = function (app, passport) {
     });
 
 	app.get('/profile/templates', isLoggedIn, function (req, res) {
-        res.sendFile( path.resolve('views/templates.html') );
+        res.sendFile( path.resolve(path.resolve('public/views/templates.html') ) );
     });
 
 	app.post('/profile/addfilter', isLoggedIn, function (req, res) {

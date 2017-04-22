@@ -16,5 +16,5 @@ function EmitNewFilter(io, row){
 	em.EmitGeneric.call(this, io, row);
 	this.emitType = 'newFilter_';
 	profile.listenFilter(row);
-	this.emitData = { id: row.id, filterTitle: row.filterTitle, table: row.table};
+	this.emitData = { id: row.id, title: row.filterTitle, table: row.table, status: row.status};
 }

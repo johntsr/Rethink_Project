@@ -1,85 +1,3 @@
-function SendServerData(){
-	this.data = {};
-	this.errorInfo = { error: { triggered: false, description: ""} };
-}
-
-SendServerData.prototype.toString = function(){
-	return JSON.stringify(this.data);
-};
-
-SendServerData.prototype.getData = function(){
-	return this.data;
-};
-
-SendServerData.prototype.triggerError = function(description){
-	this.errorInfo.triggered = true;
-	this.errorInfo.description = description;
-};
-
-SendServerData.prototype.error = function(){
-	return this.errorInfo.triggered;
-};
-
-SendServerData.prototype.add = function(newLabel, newData){
-	if( !this.error() ){
-		this.data[newLabel] = newData;
-	}
-};
-
-SendServerData.prototype.push = function(label, newData){
-	if( !this.error() ){
-		if(!this.data[label]){
-			this.data[label] = [];
-		}
-		this.data[label].push(newData);
-	}
-};
-
-SendServerData.prototype.send = function(serverURL, callback){
-	if(!callback){
-		callback = function(data) {};
-	}
-
-	if( this.error() ){
-		alert(this.errorInfo.description);
-	}
-	else{
-		$.ajax({
-			type: 'POST',
-			url: serverURL,
-			data: {
-				userData: this.data
-			},
-			success: callback
-		});
-	}
-};
-
-
-
-
-
-function loadTemplateTo(originalTemplates, loadSelector, content){
-	var template = $(loadSelector, originalTemplates).clone();
-
-	if( "attrs" in content){
-		var attrValues = content.attrs;
-		for (var attr in attrValues) {
-			$(template).attr(attr, attrValues[attr]);
-		}
-	}
-
-	if( "text" in content){
-		var textValues = content.text;
-		for (var text in textValues) {
-	    	$(text, template).text( textValues[text] );
-		}
-	}
-
-	return template;
-}
-
-
 function TypeField(field){
 	this.field = field;
 }
@@ -104,7 +22,6 @@ TypeField.prototype.storeFilterData = function(data, myData){
 	data.push(this.filterTag(), myData);
 };
 
-
 function createFieldParser(field){
 	switch ( field.type ) {
 		case "boolean": return new BoolField(field);
@@ -112,7 +29,6 @@ function createFieldParser(field){
 		default: return null;
 	}
 }
-
 
 
 
@@ -139,6 +55,8 @@ BoolField.prototype.showChoices = function(originalTemplates, tableName){
 	var boolFieldTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
     $("#createFilters_" + tableName).append( $(boolFieldTemplate) );
 };
+
+
 
 
 
