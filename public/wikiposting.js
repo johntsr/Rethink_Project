@@ -24,7 +24,7 @@ calls.newFilter = function(data) {
 };
 
 calls.deleteFilter = function(data) {
-    hideFilter(data.filterTitle, data.id);
+    hideFilter(data.id);
 };
 
 function decodeHtml(html) {
@@ -113,7 +113,7 @@ function getFiltersAsync(originalTemplates, table){
     });
 }
 
-function hideFilter(filterTitle, filterID){
+function hideFilter(filterID){
     $('#' + filterID).remove();
     var index = filterIDs.indexOf(filterID);
     filterIDs.splice(index, 1);

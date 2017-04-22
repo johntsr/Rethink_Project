@@ -75,7 +75,24 @@ function addFilter(filterInfo, callback) {
 function deleteFilter(filterID, callback) {
     'use strict';
 	console.log("Delete filter: " + filterID);
-    w.Connect( new w.DeleteByKey(config.tables.filters, filterID) );
+	updateFilterStatus(filterID, callback, fparser.filterStatus.DELETE);
+}
+
+function pauseFilter(filterID, callback) {
+    'use strict';
+	console.log("Pause filter: " + filterID);
+	updateFilterStatus(filterID, callback, fparser.filterStatus.PAUSE);
+}
+
+function playFilter(filterID, callback) {
+    'use strict';
+	console.log("Play filter: " + filterID);
+	updateFilterStatus(filterID, callback, fparser.filterStatus.PLAY);
+}
+
+function updateFilterStatus(filterID, callback, _status) {
+    'use strict';
+	w.Connect( new w.UpdateByKey(config.tables.filters, filterID, {status: _status}) );
 }
 
 function getFilters(userID, table, callback) {
@@ -89,33 +106,50 @@ function getFilters(userID, table, callback) {
 
 function listenFilter(filterInfoData) {
     'use strict';
-    var endOfDay = false;
+    var endOfDay = new ControlFlag();
     w.connect(
         function(conn) {
             var filter = fparser.AndExpressions([{name:'userID', value:filterInfoData.userID},
                                     {name:'table', value:filterInfoData.table},
                                     {name:'query', value:filterInfoData.query},
                                     {name:'filterTitle', value:filterInfoData.filterTitle}]).toNoSQLQuery();
-    		r.table(config.tables.filters).filter( fparser.rethinkFilter(filter) ).changes().run(conn).then(
+
+			r.table(config.tables.filters).filter( fparser.rethinkFilter(filter) ).changes().run(conn).then(
     			function(cursor){
                     cursor.each(function(error, rowChange) {
-                        if(!rowChange.new_val){
-                            endOfDay = true;
-                            cursor.close();
-                            return false;
-                        }
+						var row = rowChange.new_val;
+						switch ( row.status ) {
+							case fparser.filterStatus.PLAY:
+
+								break;
+							case fparser.filterStatus.PAUSE:
+
+								break;
+							case fparser.filterStatus.DELETE:
+								endOfDay.set();
+								cursor.close();
+								w.Connect( new w.DeleteByKey(config.tables.filters, row.id) );
+								return false;				// stop listening for changes!
+							default:
+								break;
+						}
+
          			});
-    			}).error(calls.throwError);
-            r.table(filterInfoData.table).filter( fparser.rethinkFilter(filterInfoData.query) ).changes().run(conn).then(function(cursor) {
-               cursor.each(function(error, rowChange) {
-                   if(endOfDay){
-                       cursor.close();
-                       conn.close();
-                       return false;
-                   }
-    			   prepareBroadcast(broadcast.create(config.tables.wiki, filterInfoData, rowChange) );
-    			});
-        	}).error(calls.throwError);
+    			}
+			).error(calls.throwError);
+
+			r.table(filterInfoData.table).filter( fparser.rethinkFilter(filterInfoData.query) ).changes().run(conn).then(
+                function(cursor) {
+                   cursor.each(function(error, rowChange) {
+                       if( endOfDay.value() ){
+                           cursor.close();
+                           conn.close();
+                           return false;
+                       }
+						prepareBroadcast(broadcast.create(config.tables.wiki, filterInfoData, rowChange) );
+    				});
+        		}
+			).error(calls.throwError);
     	}
     );
 }
@@ -124,3 +158,29 @@ function prepareBroadcast(wikiBroadcast) {
     'use strict';
     w.Connect( new w.Insert(config.tables.broadcast, wikiBroadcast.getData()) );
 }
+
+
+
+function ControlFlag(){
+    'use strict';
+    this.flag = false;
+}
+
+ControlFlag.prototype.condSet = function(assertExpr) {
+	if( !assertExpr ){
+		this.flag = true;
+	}
+    return this.flag;
+};
+
+ControlFlag.prototype.set = function() {
+	this.flag = true;
+};
+
+ControlFlag.prototype.reset = function() {
+	this.flag = false;
+};
+
+ControlFlag.prototype.value = function(){
+    return this.flag;
+};

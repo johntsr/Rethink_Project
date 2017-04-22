@@ -1,9 +1,17 @@
-var boolParser 	= require("./parsers/boolparser.js");
-var multiParser = require("./parsers/multipleparser.js");
-var db_help 	= require("./db_help.js");
+var boolParser 			= require("./parsers/boolparser.js");
+var multiParser 		= require("./parsers/multipleparser.js");
+var db_help 			= require("./db_help.js");
 
-var model 		= module.exports;
-model.create 	= create;
+var FILTER_STATUS = {
+  PLAY 		: 0,
+  PAUSE		: 1,
+  DELETE 	: 2
+};
+
+var model 				= module.exports;
+model.create 			= create;
+model.STATUS 			= FILTER_STATUS;
+
 
 // create a "FilterParser" based on a user "option"
 function createFilterParser(table, filter){
@@ -38,6 +46,10 @@ function FilterInfo(_userID, filterData){
 	this.filterInfo.table = filterData.table;				// the db table on which it operates
 	this.filterInfo.userID = _userID;						// the db id of the user
 	this.filterInfo.query = "";								// initialize the query-string, then construct it
+
+	if( !filterData.status ){
+		this.filterInfo.status = FILTER_STATUS.PLAY;
+	}
 
 	// first, get the options of the filter
 	// ie. the column names of the matching table are meant, as defined in "FieldsInfo" table (models/wikipost.js)
