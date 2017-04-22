@@ -3,7 +3,7 @@ var w 				= require("../operations/index.js");
 var fparser 		= require('../../filterparser/index.js');
 var config 			= require('../../../config');
 var calls 			= require("../../callbacks.js");
-var broadcast 		= require("../../broadcast.js");
+var emittypes 		= require("./emittypes/index.js");
 var sources 		= require('../../datasources/index.js');
 
 var model 			= module.exports;
@@ -138,7 +138,8 @@ function listenFilter(filterInfoData) {
                         	conn.close();
                         	return false;
                        	}
-						prepareBroadcast(broadcast.create(config.tables.wiki, filterInfoData, rowChange) );
+                        var data = { filterData: filterInfoData, postData: rowChange};
+                        w.Connect( new w.Insert(config.tables.broadcast, data), conn, false );
     				});
         		}
 			).error(calls.throwError);
@@ -146,10 +147,6 @@ function listenFilter(filterInfoData) {
     );
 }
 
-function prepareBroadcast(wikiBroadcast) {
-    'use strict';
-    w.Connect( new w.Insert(config.tables.broadcast, wikiBroadcast.getData()) );
-}
 
 
 
