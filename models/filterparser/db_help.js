@@ -14,7 +14,7 @@ model.valueConstraint	= valueConstraint;
 // to the corresponding js function (eval!)
 function rethinkFilter(filterStr){
 	'use strict';
-	return eval(filterStr);
+	return new Function('doc', "return " + filterStr + ";");
 }
 
 // php-like escape of html input
@@ -80,10 +80,11 @@ function noSQL_AND(expression){
 function valueConstraint(columnName, opSymbol, value){
 	'use strict';
 	var map = {
-		"=" : "eq",
-		">" : "gt",
-		"<" : "lt"
+		"=" 	: "eq",
+		">" 	: "gt",
+		"<" 	: "lt",
+		"match" : "match"
 	};
 
-	return "r.row(" + stringify(columnName) + ")." + map[opSymbol] + "(" + stringify(value) + ")";
+	return "doc(" + stringify(columnName) + ")." + map[opSymbol] + "(" + stringify(value) + ")";
 }

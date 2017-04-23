@@ -1,5 +1,6 @@
 function SendServerData(){
 	this.data = {};
+	this.dataTag = "filterOptions";
 	this.errorInfo = { error: { triggered: false, description: ""} };
 }
 
@@ -11,27 +12,16 @@ SendServerData.prototype.getData = function(){
 	return this.data;
 };
 
-SendServerData.prototype.triggerError = function(description){
-	this.errorInfo.triggered = true;
-	this.errorInfo.description = description;
-};
-
-SendServerData.prototype.error = function(){
-	return this.errorInfo.triggered;
-};
-
 SendServerData.prototype.add = function(newLabel, newData){
-	if( !this.error() ){
-		this.data[newLabel] = newData;
-	}
+	this.data[newLabel] = newData;
 };
 
-SendServerData.prototype.push = function(label, newData){
-	if( !this.error() ){
-		if(!this.data[label]){
-			this.data[label] = [];
+SendServerData.prototype.push = function(newData){
+	if( Object.keys(newData).length > 0 ){
+		if(!this.data[this.dataTag]){
+			this.data[this.dataTag] = [];
 		}
-		this.data[label].push(newData);
+		this.data[this.dataTag].push(newData);
 	}
 };
 
@@ -40,8 +30,8 @@ SendServerData.prototype.send = function(serverURL, callback){
 		callback = function(data) {};
 	}
 
-	if( this.error() ){
-		alert(this.errorInfo.description);
+	if( !this.data[this.dataTag] ){
+		alert("Please, say something!");
 	}
 	else{
 		$.ajax({

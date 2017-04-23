@@ -29,12 +29,10 @@ calls.deleteFilter = function(data) {
 
 calls.statusFilter = function(data) {
 	if( data.status ===  FILTER_STATUS.PLAY ){
-		console.log("play!");
 		$('#' + data.id + " .playFilter").hide();
 		$('#' + data.id + " .pauseFilter").show();
     }
     else{
-		console.log("pause!");
 		$('#' + data.id + " .playFilter").show();
 		$('#' + data.id + " .pauseFilter").hide();
     }

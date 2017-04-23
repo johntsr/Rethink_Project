@@ -8,6 +8,7 @@ var WikiPostProps = [	"bot", "comment", "namespace", "server_name", "timestamp",
 var FieldsInfo = [	{name: "bot" , type: "boolean", message: "Check if bots are welcome"} ,
 					{name: "type", type: "multiple", message: "Check the type(s) of posts you are interested in",
 					 	choices: ["new", "edit", "log", "categorize", "external"]},
+					{name: "title" , type: "string", message: "Match string in post title"}
 				];
 					// {name: "user", type: "string"},
 					// {name: "wiki", type: "single", choices: ["all", "en", "common"] } ];

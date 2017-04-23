@@ -14,18 +14,15 @@ TypeField.prototype.storeName = function(myData){
 	myData.name = this.fieldName();
 };
 
-TypeField.prototype.filterTag = function(){
-	return "filterOptions";
-};
-
 TypeField.prototype.storeFilterData = function(data, myData){
-	data.push(this.filterTag(), myData);
+	data.push(myData);
 };
 
 function createFieldParser(field){
 	switch ( field.type ) {
-		case "boolean": return new BoolField(field);
-		case "multiple": return new MultipleField(field);
+		case "boolean"	: return new BoolField(field);
+		case "multiple"	: return new MultipleField(field);
+		case "string"	: return new StringField(field);
 		default: return null;
 	}
 }
@@ -73,20 +70,18 @@ MultipleField.prototype.pushData = function(data){
 	this.storeName(myData);
 	myData.value = {};
 
-	var error = true;
+	var empty = true;
 	for (var i = 0; i < this.field.choices.length; i++) {
 		var checked = $('#' + this.fieldName() + " #" + i + " .choiceBtn").is(":checked");
 		myData.value[i] = checked;
 		if( checked ){
-			error = false;
+			empty = false;
 		}
 	}
 
-	if( error ){
-		data.triggerError("In field <<" + this.fieldName() + ">>, at least 1 option must be selected!");
+	if( !empty ){
+		this.storeFilterData(data, myData);
 	}
-
-	this.storeFilterData(data, myData);
 };
 
 MultipleField.prototype.showChoices = function(originalTemplates, tableName){
@@ -110,4 +105,30 @@ MultipleField.prototype.showChoices = function(originalTemplates, tableName){
 
 	$(multipleFieldTemplate).append( $(choiceTemplate) );
     $("#createFilters_" + tableName).append( $(multipleFieldTemplate) );
+};
+
+
+
+function StringField (field){
+	TypeField.call(this, field);
+}
+
+StringField.prototype = Object.create(TypeField.prototype);
+StringField.prototype.constructor = StringField;
+
+StringField.prototype.pushData = function(data){
+	var text = $('#' + this.fieldName() + " .match_string").val();
+	if( text.trim().length !== 0 ){
+		var myData = {};
+		this.storeName(myData);
+		myData.value = text;
+		this.storeFilterData(data, myData);
+	}
+};
+
+StringField.prototype.showChoices = function(originalTemplates, tableName){
+	var loadSelector = 'li.createFilter[title="string"]';
+	var content = { attrs: { id: this.fieldName() }, text: { '.message': this.fieldMessage() }};
+	var stringFieldTemplate = loadTemplateTo(originalTemplates, loadSelector, content);
+    $("#createFilters_" + tableName).append( $(stringFieldTemplate) );
 };

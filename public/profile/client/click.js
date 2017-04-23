@@ -15,11 +15,16 @@ $('#filter_form').on('submit', function (event) {
 
 	var title = $('#filter_title').val();
 	if(!title || title.trim().length === 0) {
-		sendData.triggerError('The title is required');
+		alert('The title is required');
+		return;
 	}
 	sendData.add("filterTitle", codeHtml(title));
 
 	var table = $('#dbTables').val();
+	if( !table ){
+		alert('A table is required');
+		return;
+	}
 	sendData.add("table", table);
 
 	for (var i = 0; i < fieldParsers[table].length; i++) {

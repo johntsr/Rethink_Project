@@ -52,7 +52,6 @@ function addFilter(filterInfo, callback) {
         function(conn) {
 			var filter = fparser.AndExpressions([{name:'userID', value:filterInfo.userID()},
 		                                        {name:'table', value:filterInfo.table()},
-												{name:'query', value:filterInfo.query()},
 												{name:'filterTitle', value:filterInfo.filterTitle()}]).toNoSQLQuery();
             r.table(config.tables.filters).filter( fparser.rethinkFilter(filter) ).isEmpty().run(conn).then(
     			function(empty){
@@ -117,7 +116,6 @@ function listenFilter(filterInfoData) {
         function(conn) {
             var filter = fparser.AndExpressions([{name:'userID', value:filterInfoData.userID},
                                     {name:'table', value:filterInfoData.table},
-                                    {name:'query', value:filterInfoData.query},
                                     {name:'filterTitle', value:filterInfoData.filterTitle}]).toNoSQLQuery();
 
 			r.table(config.tables.filters).filter( fparser.rethinkFilter(filter) ).changes().run(conn).then(

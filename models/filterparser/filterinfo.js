@@ -1,5 +1,6 @@
 var boolParser 			= require("./parsers/boolparser.js");
 var multiParser 		= require("./parsers/multipleparser.js");
+var stringParser 		= require("./parsers/stringparser.js");
 var db_help 			= require("./db_help.js");
 
 var FILTER_STATUS = {
@@ -20,6 +21,7 @@ function createFilterParser(table, filter){
 	switch ( filter.name ) {
 		case "bot": return boolParser.create(filter);
 		case "type": return multiParser.create(filter);
+		case "title": return stringParser.create(filter);
 		default: return null;
 	}
 }
