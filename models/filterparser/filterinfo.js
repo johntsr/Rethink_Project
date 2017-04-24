@@ -34,6 +34,9 @@ function FilterInfo(_userID, filterData){
 	this.filterInfo.userID = _userID;						// the db id of the user
 	this.filterInfo.query = "";								// initialize the query-string, then construct it
 
+	// TODO
+	this.filterInfo.squash = 2.0;
+
 	if( !filterData.status ){
 		this.filterInfo.status = FILTER_STATUS.PLAY;
 	}

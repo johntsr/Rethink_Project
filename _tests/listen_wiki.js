@@ -6,7 +6,7 @@ var calls = require('../models/callbacks.js');
 var wiki = require("../models/datasources/wikipost.js");
 var r = require('rethinkdb');
 var config = require('../config');
-var w = require("../models/rethinkwrap.js");
+var w = require("../models/database/operations/index.js");
 var fparser = require('../models/filterparser/index.js');
 var EventSource = require('eventsource');
 
@@ -54,6 +54,25 @@ function deleteFromDB(){
 	);
 }
 
+function insertOne(){
+		w.Connect( new w.Insert(config.tables.wiki, {
+	"bot": true ,
+	"comment": "/* wbeditentity-update:0| */ BOT - Adding descriptions (28 languages): ar, be, be-tarask, bs, cy, de-at, de-ch, eo, gsw, hr, hu, hy, lb, lv, nap, sco, sk, sl, sr, uk, vi, yue, zh-cn, zh-hk, zh-mo, zh-my, zh-sg, zh-tw" ,
+	"namespace": 0 ,
+	"server_name":  "www.wikidata.org" ,
+	"timestamp": 1489835329 ,
+	"title":  "OLE KAKAKA" ,
+	"type":  "edit" ,
+	"user":  "Emijrpbot" ,
+	"wiki":  "wikidatawiki"
+	}) );
+}
 
-setInterval(saveToDB, SaveInterval * 1000);
-setInterval(deleteFromDB, DeleteInterval * 1000);
+// setInterval(saveToDB, SaveInterval * 1000);
+// setInterval(deleteFromDB, DeleteInterval * 1000);
+
+
+
+for (var i = 0; i < 100; i++) {
+	setTimeout(insertOne, 0.1 * i * 1000);
+}

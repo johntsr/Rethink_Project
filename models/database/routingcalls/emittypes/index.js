@@ -3,6 +3,7 @@ var statusF 	= require("./emitstatusfilter.js");
 var newF 		= require("./emitnewfilter.js");
 
 var newP 		= require("./emitnewpost.js");
+var deleteP 	= require("./emitdeletepost.js");
 
 var model 		= module.exports;
 model.createF 	= createF;

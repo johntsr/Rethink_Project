@@ -1,3 +1,5 @@
+/*jshint esversion: 6 */
+
 var r               = require('rethinkdb');
 var w 				= require("../operations/index.js");
 var fparser 		= require('../../filterparser/index.js');
@@ -16,7 +18,6 @@ model.pauseFilter 	= pauseFilter;
 model.playFilter 	= playFilter;
 
 function getPosts(callback) {
-    'use strict';
 	var GetSeconds = 5;
 	var timestamp = Math.floor(new Date() / 1000) - GetSeconds;
 
@@ -45,12 +46,22 @@ function getPosts(callback) {
 }
 
 function addFilter(filterInfo, callback) {
-    'use strict';
     w.connect(
         function(conn) {
-			var filter = fparser.AndExpressions([{name:'userID', value:filterInfo.userID()},
-		                                        {name:'table', value:filterInfo.table()},
-												{name:'filterTitle', value:filterInfo.filterTitle()}]).toNoSQLQuery();
+			var filter = fparser.AndExpressions([
+				{
+					name: 'userID',
+					value: filterInfo.userID()
+				},
+				{
+					name: 'table',
+					value: filterInfo.table()
+				},
+				{
+					name: 'filterTitle',
+					value: filterInfo.filterTitle()
+				}
+	]).toNoSQLQuery();
             r.table(config.tables.filters).filter( fparser.rethinkFilter(filter) ).isEmpty().run(conn).then(
     			function(empty){
     				if( empty ){
@@ -72,32 +83,32 @@ function addFilter(filterInfo, callback) {
 }
 
 function deleteFilter(filterID, callback) {
-    'use strict';
-	console.log("Delete filter: " + filterID);
 	updateFilterStatus(filterID, callback, fparser.filterStatus.DELETE);
 }
 
 function pauseFilter(filterID, callback) {
-    'use strict';
-	console.log("Pause filter: " + filterID);
 	updateFilterStatus(filterID, callback, fparser.filterStatus.PAUSE);
 }
 
 function playFilter(filterID, callback) {
-    'use strict';
-	console.log("Play filter: " + filterID);
 	updateFilterStatus(filterID, callback, fparser.filterStatus.PLAY);
 }
 
 function updateFilterStatus(filterID, callback, _status) {
-    'use strict';
 	w.Connect( new w.UpdateByKey(config.tables.filters, filterID, {status: _status}) );
 }
 
 function getFilters(userID, table, callback) {
-    'use strict';
-    var filter = fparser.AndExpressions([{name:'userID', value:userID},
-                                        {name:'table', value:table}]).toNoSQLQuery();
+    var filter = fparser.AndExpressions([
+		{
+    		name: 'userID',
+    		value: userID
+    	},
+    	{
+    		name: 'table',
+    		value: table
+    	}
+    ]).toNoSQLQuery();
     w.Connect(
         new w.GetByFilter(config.tables.filters, fparser.rethinkFilter(filter),
             function (cursor){
@@ -108,15 +119,23 @@ function getFilters(userID, table, callback) {
 }
 
 function listenFilter(filterInfoData) {
-    'use strict';
     var stopListen = false;
     w.connect(
         function(conn) {
-            var filter = fparser.AndExpressions([{name:'userID', value:filterInfoData.userID},
-                                    {name:'table', value:filterInfoData.table},
-                                    {name:'filterTitle', value:filterInfoData.filterTitle}]).toNoSQLQuery();
-
-			r.table(config.tables.filters).filter( fparser.rethinkFilter(filter) ).changes().run(conn).then(
+            var filter = fparser.AndExpressions([{
+            		name: 'userID',
+            		value: filterInfoData.userID
+            	},
+            	{
+            		name: 'table',
+            		value: filterInfoData.table
+            	},
+            	{
+            		name: 'filterTitle',
+            		value: filterInfoData.filterTitle
+            	}
+            ]).toNoSQLQuery();
+            r.table(config.tables.filters).filter( fparser.rethinkFilter(filter) ).changes().run(conn).then(
     			function(cursor){
                     cursor.each(function(error, rowChange) {
 						stopListen = true;
@@ -130,17 +149,24 @@ function listenFilter(filterInfoData) {
     			}
 			).error(calls.throwError);
 
-			r.table(filterInfoData.table).filter( fparser.rethinkFilter(filterInfoData.query) ).changes().run(conn).then(
+            var policy = {
+            	squash: filterInfoData.squash
+            };
+			r.table(filterInfoData.table).filter( fparser.rethinkFilter(filterInfoData.query) ).changes(policy).run(conn).then(
                 function(cursor) {
                    cursor.each(function(error, rowChange) {
+
                        	if( stopListen ){
                         	w.close(cursor);
                         	w.close(conn);
                         	return false;
                        	}
-						var postID = ( rowChange.new_val !== null )? rowChange.new_val.id : rowChange.old_val.id;
-                        var data = { filterData: filterInfoData, postData: rowChange, id: postID};
-                        w.Connect( new w.Insert(config.tables.broadcast, data), conn, false );
+
+                        if( !rowChange.error ){
+                            var postID = ( rowChange.new_val !== null )? rowChange.new_val.id : rowChange.old_val.id;
+                            var data = { filterData: filterInfoData, postData: rowChange, id: postID};
+                            w.Connect( new w.Insert(config.tables.broadcast, data), conn, false );
+                        }
     				});
         		}
 			).error(calls.throwError);

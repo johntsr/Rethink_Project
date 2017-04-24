@@ -40,8 +40,8 @@ function emitFilters(io, conn){
 
 
 function emitPosts(io, conn){
-    r.table(config.tables.broadcast).changes().run(conn).then(function(cursor) {
-    // r.table(config.tables.broadcast).changes({squash: 1.0}).run(conn).then(function(cursor) {
+    var policy = {squash: 1.0};
+    r.table(config.tables.broadcast).changes(policy).run(conn).then(function(cursor) {
         cursor.each(function(error, row) {
             row = row.new_val;
             if(row){
