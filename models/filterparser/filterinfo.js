@@ -1,7 +1,5 @@
-var boolParser 			= require("./parsers/boolparser.js");
-var multiParser 		= require("./parsers/multipleparser.js");
-var stringParser 		= require("./parsers/stringparser.js");
 var db_help 			= require("./db_help.js");
+var sources 			= require("../datasources/index.js");
 
 var FILTER_STATUS = {
   PLAY 		: 0,
@@ -12,19 +10,6 @@ var FILTER_STATUS = {
 var model 				= module.exports;
 model.create 			= create;
 model.STATUS 			= FILTER_STATUS;
-
-
-// create a "FilterParser" based on a user "option"
-function createFilterParser(table, filter){
-	'use strict';
-	filter.table = table;
-	switch ( filter.name ) {
-		case "bot": return boolParser.create(filter);
-		case "type": return multiParser.create(filter);
-		case "title": return stringParser.create(filter);
-		default: return null;
-	}
-}
 
 
 function create(_userID, filterData){
@@ -61,10 +46,10 @@ function FilterInfo(_userID, filterData){
 	// so, first apply the expression (column constraint)
 	// and, in the loop, append the rest of the expression with an 'AND'
 
-	var partQuery = createFilterParser(this.table(), filters[0]).toNoSQLQuery();
+	var partQuery = sources.createFilterParser(this.table(), filters[0]).toNoSQLQuery();
 	this.appendQuery(partQuery);
 	for(var i = 1; i < filters.length; i++){
-		partQuery = db_help.noSQL_AND(createFilterParser(this.table(), filters[i]).toNoSQLQuery());
+		partQuery = db_help.noSQL_AND(sources.createFilterParser(this.table(), filters[i]).toNoSQLQuery());
 		this.appendQuery(partQuery);
 	}
 }

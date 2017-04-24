@@ -1,4 +1,7 @@
 var config 				= require("../../config.js");
+var boolParser 			= require("../filterparser/parsers/boolparser.js");
+var multiParser 		= require("../filterparser/parsers/multipleparser.js");
+var stringParser 		= require("../filterparser/parsers/stringparser.js");
 
 
 
@@ -13,9 +16,21 @@ var FieldsInfo = [	{name: "bot" , type: "boolean", message: "Check if bots are w
 					// {name: "user", type: "string"},
 					// {name: "wiki", type: "single", choices: ["all", "en", "common"] } ];
 
-var model 				= module.exports;
-model.FieldsInfo 		= FieldsInfo;
-model.create 			= create;
+var model 					= module.exports;
+model.FieldsInfo 			= FieldsInfo;
+model.create 				= create;
+model.createFilterParser	= createFilterParser;
+
+// create a "FilterParser" based on a user "option"
+function createFilterParser(filter){
+	'use strict';
+	switch ( filter.name ) {
+		case "bot": return boolParser.create(filter);
+		case "type": return multiParser.create(filter);
+		case "title": return stringParser.create(filter);
+		default: return null;
+	}
+}
 
 function create(streamData) {
 	return new WikiPost(streamData);

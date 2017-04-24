@@ -58,10 +58,8 @@ module.exports = function (app, passport) {
 
     app.get('/profile/fieldsInfo', isLoggedIn, function (req, res) {
 		var tableInfo = {};
-		for (var tableName in sources) {
-			if (sources.hasOwnProperty(tableName)) {
-				tableInfo[tableName] = sources[tableName].FieldsInfo;
-			}
+		for (var tableName of sources.tables()) {
+			tableInfo[tableName] = sources.fieldsInfo(tableName);
 		}
 
         var response = { "tableInfo": tableInfo, id: req.user.id};

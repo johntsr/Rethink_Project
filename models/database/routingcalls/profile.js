@@ -21,7 +21,7 @@ function getPosts(callback) {
 	var timestamp = Math.floor(new Date() / 1000) - GetSeconds;
 
     var dataSend = [];
-    var num = Object.keys(sources).length;
+    var num = sources.tablesNum();
     var count = 0;
 
     var appendData = function(data){
@@ -37,12 +37,10 @@ function getPosts(callback) {
     };
 
 	var filter = fparser.AndExpressions([{name:'timestamp', value:timestamp, op:'<'}]).toNoSQLQuery();
-	for (var tableName in sources) {
-		if (sources.hasOwnProperty(tableName)) {
-			w.Connect(
-				new w.GetByFilter(tableName, fparser.rethinkFilter(filter), appendFromCursor )
-			);
-		}
+	for (var tableName of sources.tables()) {
+		w.Connect(
+			new w.GetByFilter(tableName, fparser.rethinkFilter(filter), appendFromCursor )
+		);
 	}
 }
 
