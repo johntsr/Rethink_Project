@@ -8,6 +8,7 @@ var calls 			= require("../../callbacks.js");
 var emittypes 		= require("./emittypes/index.js");
 var sources 		= require('../../datasources/index.js');
 var broadcast 		= require('./broadcastdata.js');
+var connections 	= require("./connections.js");
 
 var model 			= module.exports;
 model.getPosts 		= getPosts;
@@ -18,7 +19,7 @@ model.listenFilter 	= listenFilter;
 model.pauseFilter 	= pauseFilter;
 model.playFilter 	= playFilter;
 
-function getPosts(callback) {
+function getPosts(id, callback) {
 	var GetSeconds = 5;
 	var timestamp = Math.floor(new Date() / 1000) - GetSeconds;
 
@@ -42,12 +43,13 @@ function getPosts(callback) {
 	var filter = fparser.AndExpressions([{name:'timestamp', value:timestamp, op:'<'}]).toNoSQLQuery();
 	for (var tableName of sources.tables()) {
 		w.Connect(
-			new w.GetByFilter(tableName, fparser.rethinkFilter(filter), appendFromCursor )
+			new w.GetByFilter(tableName, filter, appendFromCursor ), connections.get(id)
 		);
 	}
 }
 
 function addFilter(filterInfo, callback) {
+    var id = filterInfo.userID;
     w.connect(
         function(conn) {
 			var filter = filterSelector(filterInfo.getData());
@@ -59,47 +61,47 @@ function addFilter(filterInfo, callback) {
                                 function(data){
                                     callback(data.inserted > 0);
                                 }
-                        ), conn, true);
+                        ), conn);
     				}
     				else{
-                        w.close(conn);
     					callback(false);
     				}
     			}
     		).error(calls.throwError);
-        }
+        }, false, connections.get(id)
     );
 }
 
-function deleteFilter(filterID, callback) {
-	updateFilterStatus(filterID, callback, fparser.filterStatus.DELETE);
+function deleteFilter(id, filterID, callback) {
+	updateFilterStatus(id, filterID, callback, fparser.filterStatus.DELETE);
 }
 
-function pauseFilter(filterID, callback) {
-	updateFilterStatus(filterID, callback, fparser.filterStatus.PAUSE);
+function pauseFilter(id, filterID, callback) {
+	updateFilterStatus(id, filterID, callback, fparser.filterStatus.PAUSE);
 }
 
-function playFilter(filterID, callback) {
-	updateFilterStatus(filterID, callback, fparser.filterStatus.PLAY);
+function playFilter(id, filterID, callback) {
+	updateFilterStatus(id, filterID, callback, fparser.filterStatus.PLAY);
 }
 
-function updateFilterStatus(filterID, callback, _status) {
-	w.Connect( new w.UpdateByKey(config.tables.filters, filterID, {status: _status}) );
+function updateFilterStatus(id, filterID, callback, _status) {
+	w.Connect( new w.UpdateByKey(config.tables.filters, filterID, {status: _status}), connections.get(id));
 }
 
-function getFilters(userID, table, callback) {
-    var filter = filterUserSelector(userID, table);
+function getFilters(id, table, callback) {
+    var filter = filterUserSelector(id, table);
     w.Connect(
-        new w.GetByFilter(config.tables.filters, fparser.rethinkFilter(filter),
+        new w.GetByFilter(config.tables.filters, filter,
             function (cursor){
                 w.cursorToArray(cursor, callback);
             }
-        )
+        ), connections.get(id)
     );
 }
 
 function listenFilter(fInfoData) {
     var stopListen = false;
+	var id = fInfoData.userID;
     w.connect(
         function(conn) {
             r.table(config.tables.filters).get(fInfoData.id).changes().run(conn).then(
@@ -109,7 +111,7 @@ function listenFilter(fInfoData) {
 						w.close(cursor);
 						var row = rowChange.new_val;
 						if( row.status === fparser.filterStatus.DELETE ){
-							w.Connect( new w.DeleteByKey(config.tables.filters, row.id), conn, false );
+							w.Connect( new w.DeleteByKey(config.tables.filters, row.id), conn);
 						}
 						return false;				// stop listening for changes!
          			});
@@ -131,12 +133,12 @@ function listenFilter(fInfoData) {
 
                         if( !rowChange.error ){
                             var broadcastData = broadcast.create(fInfoData, rowChange);
-                            w.Connect( new w.Insert(config.tables.broadcast, broadcastData), conn, false );
+                            w.Connect( new w.Insert(config.tables.broadcast, broadcastData), conn);
                         }
     				});
         		}
 			).error(calls.throwError);
-    	}
+    	}, false, connections.get(id)
     );
 }
 

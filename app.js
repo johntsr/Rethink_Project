@@ -12,7 +12,6 @@ var session = require('express-session');
 var logger = require('express-logger');
 var passport = require('passport');
 var config = require('./config');
-var model = require('./models/database/routingcalls/setup.js');
 var calls = require('./models/callbacks');
 var flash = require('connect-flash');
 
@@ -38,10 +37,9 @@ app.use(cookieParser());
 app.use(flash());
 app.set('view engine', 'ejs');
 
-var routes = require('./controllers/index')(app, passport);
+var routes = require('./controllers/index')(app, passport, io);
 
 
 server.listen(config.port, function() {
     console.log('Server up and listening on port %d', config.port);
-    model.setup(io);
 });

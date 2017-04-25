@@ -47,7 +47,7 @@ function saveToDB(){
 function deleteFromDB(){
 	var timestamp = Math.floor(new Date() / 1000) - DeleteSeconds;
     var filter = fparser.AndExpressions([{name:'timestamp', value:timestamp, op:'='}]).toNoSQLQuery();
-	w.Connect( new w.DeleteByFilter(config.tables.wiki, fparser.rethinkFilter(filter),
+	w.Connect( new w.DeleteByFilter(config.tables.wiki, filter,
 		 	function (){
 				console.log("Deleted!");
 			})

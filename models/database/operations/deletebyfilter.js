@@ -18,5 +18,5 @@ function DeleteByFilter(_table, _filter, _callback, _errCallback){
 }
 
 DeleteByFilter.prototype.run = function (conn) {
-    return r.table(this.table).filter( this.filter).delete().run(conn);
+    return r.table(this.table).filter(fparser.rethinkFilter(this.filter)).delete().run(conn);
 };

@@ -1,6 +1,7 @@
 var w 						= require("../operations/index.js");
 var config 					= require('../../../config');
 var fparser 				= require('../../filterparser/index.js');
+var connections 			= require("./connections.js");
 
 var model 					= module.exports;
 model.getUserByID 			= getUserByID;
@@ -11,7 +12,8 @@ model.signOut 				= signOut;
 function getUserByID(userID, callback) {
     w.Connect( new w.GetByKey(config.tables.users, userID,
         function (user){ callback(null, user); },
-        function (error){ callback(error); })
+        function (error){ callback(error); }),
+        connections.get(userID)
     );
 }
 
@@ -19,7 +21,7 @@ function getUserByCredentials(username, password, callback) {
     var filter = fparser.AndExpressions([{name:'username', value:fparser.htmlSpecialChars(username)},
                                         {name:'password', value:fparser.htmlSpecialChars(password)}]).toNoSQLQuery();
     w.Connect(
-        new w.GetByFilter(config.tables.users, fparser.rethinkFilter(filter),
+        new w.GetByFilter(config.tables.users, filter,
             function (cursor){ w.cursorToField(cursor, callback); },
             function (error){ callback(error); })
     );
@@ -40,8 +42,8 @@ function signIn(_username, _password, callback){
 }
 
 function signOut(userID){
-    w.Connect( new w.DeleteByKey(config.tables.users, userID) );
+    w.Connect( new w.DeleteByKey(config.tables.users, userID), connections.get(userID) );
 
     var filter = fparser.AndExpressions([{name: 'userID', value: userID}]).toNoSQLQuery();
-    w.Connect( new w.DeleteByFilter(config.tables.filters, fparser.rethinkFilter(filter)) );
+    w.Connect( new w.DeleteByFilter(config.tables.filters, filter), connections.get(userID) );
 }

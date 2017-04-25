@@ -37,7 +37,6 @@ function FilterInfo(_userID, filterData){
 	// TODO
 	this.filterInfo.squash = 2.0;
 
-	// this.filterInfo.frequency = frequency.create(2, 5, "m");
 	var num = 2;
 	var time = 5;
 	var unit = "m";

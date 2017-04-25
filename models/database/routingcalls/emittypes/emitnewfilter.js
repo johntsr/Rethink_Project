@@ -14,7 +14,7 @@ EmitNewFilter.prototype.constructor = EmitNewFilter;
 
 function EmitNewFilter(io, row){
 	em.EmitGeneric.call(this, io, row);
+	profile.listenFilter( row);
 	this.emitType = 'newFilter_';
-	profile.listenFilter(row);
 	this.emitData = { id: row.id, title: row.filterTitle, table: row.table, status: row.status};
 }

@@ -9,15 +9,25 @@ model.cursorToArray = cursorToArray;
 model.cursorToField = cursorToField;
 model.close 		= close;
 
-function connect(callback, errCallback){
+function connect(callback, errCallback, conn){
     if(!errCallback){
         errCallback = calls.throwError;
     }
-    r.connect(config.database).then(callback).error(errCallback);
+
+	if(!conn){
+		r.connect(config.database).then(callback).error(errCallback);
+	}
+	else{
+		callback(conn);
+	}
 }
 
 function Connect(obj, conn, closeFlag){
     var errCallback = calls.throwError;
+
+	if(!closeFlag){
+		closeFlag = false;
+	}
 
 	if(!conn){
 	    r.connect(config.database).bind(obj).then(

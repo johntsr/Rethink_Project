@@ -3,37 +3,45 @@ var w 				= require("../operations/index.js");
 var config 			= require('../../../config');
 var calls 			= require("../../callbacks.js");
 var profile 		= require("./profile.js");
-var filters 		= require("../../filterparser/index.js");
 var emitTypes 		= require("./emittypes/index.js");
+var fparser 		= require("../../filterparser/index.js");
+var connections 	= require("./connections.js");
 var async 			= require('async');
 
-
 var model 			= module.exports;
-model.setup 		= setup;
+model.newUser	 	= newUser;
 
-function setup(io) {
+function newUser(io, id) {
     w.connect(
         function(conn) {
             console.log("Setting up update listener...");
-            listenCurrentFilters(conn);
-			emitFilters(io, conn);
-            emitPosts(io, conn);
-        }
+			connections.add(id, conn);
+            listenCurrentFilters(id);
+			emitFilters(io, id);
+            emitPosts(io, id);
+        }, false, connections.get(id)	// refresh reasons!
     );
 }
 
-function listenCurrentFilters(conn) {
-	r.table(config.tables.filters).run(conn).then(function(cursor) {
-		cursor.toArray(function(error, filters) {
-			for(var i = 0; i < filters.length; i++){
-				profile.listenFilter( filters[i] );
-			}
-		});
-	}).error(calls.throwError);
+function listenCurrentFilters(id) {
+	var filter = userSelector(id);
+	w.Connect( new w.GetByFilter(config.tables.filters, filter,
+		function(cursor) {
+			cursor.toArray(function(error, filters) {
+				for(var i = 0; i < filters.length; i++){
+					if( filters[i].status ===  fparser.filterStatus.PLAY ){
+						profile.listenFilter( filters[i] );
+					}
+				}
+			});
+		}
+	) , connections.get(id));
 }
 
-function emitFilters(io, conn){
-	r.table(config.tables.filters).changes().run(conn).then(function(cursor) {
+function emitFilters(io, id){
+	var filter = userSelector(id);
+	var conn = connections.get(id);
+	r.table(config.tables.filters).filter(filter).changes().run(conn).then(function(cursor) {
 		cursor.each(function(error, row) {
 			emitTypes.createF(io, row).emit();
 		});
@@ -41,15 +49,17 @@ function emitFilters(io, conn){
 }
 
 
-function emitPosts(io, conn){
+function emitPosts(io, id){
+	var filter = userSelector(id);
     var policy = {squash: 1.0};
-    r.table(config.tables.broadcast).changes(policy).run(conn).then(function(cursor) {
+	var conn = connections.get(id);
+    r.table(config.tables.broadcast).filter(filter).changes(policy).run(conn).then(function(cursor) {
         cursor.each(function(error, row) {
             row = row.new_val;
             if(row){
 				var spam = false;		// TODO
 				if( !spam ){
-					emitToUser(row);
+					emitToUser(io, conn, row);
 				}
 				else{
 					console.log("Spam!");
@@ -59,19 +69,29 @@ function emitPosts(io, conn){
     }).error(calls.throwError);
 }
 
-function emitToUser(row){
+function emitToUser(io, conn, row){
 	async.parallel({
 		postData: function (callback){
-			w.Connect(new w.GetByKey(row.postTable, row.postID, function(data){callback(null, data);}));
+			w.Connect(new w.GetByKey(row.postTable, row.postID, function(data){callback(null, data);}), conn);
 		},
 
 		filterData: function (callback){
-			w.Connect(new w.GetByKey(config.tables.filters, row.filterID, function(data){callback(null, data);}));
+			w.Connect(new w.GetByKey(config.tables.filters, row.filterID, function(data){callback(null, data);}), conn);
 		}
 	},
 		function(err, results) {
+			console.log("Done!");
 			emitTypes.createP(io, results.filterData, results.postData).emit();
-			w.Connect(new w.DeleteByKey(config.tables.broadcast, row.id), conn, false);
+			// w.Connect(new w.DeleteByKey(config.tables.broadcast, row.id), conn);
 		}
 	);
+}
+
+function userSelector(userID){
+	return fparser.AndExpressions([
+		{
+    		name: 'userID',
+    		value: userID
+    	}
+    ]).toNoSQLQuery();
 }

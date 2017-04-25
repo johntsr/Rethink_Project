@@ -1,10 +1,13 @@
+/*jshint esversion: 6 */
+
 var sources = require('../models/datasources/index.js');
 var auth 	= require('../models/database/routingcalls/auth.js');
+var setup 	= require('../models/database/routingcalls/setup.js');
 var db 		= require('../models/database/routingcalls/profile.js');
 var filters = require('../models/filterparser/index.js');
 var path 	= require('path');
 
-module.exports = function (app, passport) {
+module.exports = function (app, passport, io) {
 
 	app.get('/', function (req, res) {
 		res.redirect('/login');
@@ -38,20 +41,20 @@ module.exports = function (app, passport) {
 	});
 
 	app.post('/signout', function(req, res) {
-        var userID = req.user.id;
 		req.logout();
-		auth.signOut(userID);
+		auth.signOut(req.user.id);
 		res.redirect('/login');
 	});
 
 
 
 	app.get('/profile', isLoggedIn, function (req, res) {
+		setup.newUser(io, req.user.id);
 		res.sendFile( path.resolve( path.resolve('public/views/profile.html')) );
 	});
 
     app.get('/profile/getposts', isLoggedIn, function (req, res) {
-        db.getPosts(function (result) {
+        db.getPosts(req.user.id, function (result) {
             res.send(JSON.stringify(result));
         });
     });
@@ -90,7 +93,7 @@ module.exports = function (app, passport) {
 
     app.delete('/profile/filters/delete', isLoggedIn, function(req,res){
         var filterID = req.body.id;
-		db.deleteFilter(filterID, function (success, result) {
+		db.deleteFilter(req.user.id, filterID, function (success, result) {
             if (success) res.json({
                 status: 'OK'
             });
@@ -102,7 +105,7 @@ module.exports = function (app, passport) {
 
 	app.post('/profile/filters/pause', isLoggedIn, function(req,res){
         var filterID = req.body.id;
-		db.pauseFilter(filterID, function (success, result) {
+		db.pauseFilter(req.user.id, filterID, function (success, result) {
             if (success) res.json({
                 status: 'OK'
             });
@@ -114,7 +117,7 @@ module.exports = function (app, passport) {
 
 	app.post('/profile/filters/play', isLoggedIn, function(req,res){
         var filterID = req.body.id;
-		db.playFilter(filterID, function (success, result) {
+		db.playFilter(req.user.id, filterID, function (success, result) {
             if (success) res.json({
                 status: 'OK'
             });
