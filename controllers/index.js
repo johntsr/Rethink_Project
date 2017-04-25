@@ -26,6 +26,7 @@ module.exports = function (app, passport, io) {
         }));
 
     app.post('/logout', function(req, res) {
+        setup.logoutUser(req.user.id);
 		req.logout();
 		res.redirect('/login');
 	});
@@ -49,7 +50,7 @@ module.exports = function (app, passport, io) {
 
 
 	app.get('/profile', isLoggedIn, function (req, res) {
-		setup.newUser(io, req.user.id);
+		setup.loginUser(io, req.user.id);
 		res.sendFile( path.resolve( path.resolve('public/views/profile.html')) );
 	});
 

@@ -7,19 +7,33 @@ model.Connections	= Connections;
 model.add			= add;
 model.get			= get;
 model.close			= close;
+model.alive			= alive;
+model.die			= die;
 
-function add(id, conn){
+function add(id, _conn, _num){
 	if( !get[id] ){
-		Connections[id] = conn;
+		Connections[id] = {conn: _conn, num: _num, alive: true};
 	}
 }
 
 function get(id){
-	return Connections[id];
+	if( Connections[id] ){
+		return Connections[id].conn;
+	}
+	else{
+		return null;
+	}
+}
+
+function alive(id){
+	return Connections[id].alive;
+}
+
+function die(id){
+	Connections[id].alive = false;
 }
 
 function close(id){
-	if( get[id] ){
-		w.close(Connections[id]);
-	}
+	w.close(Connections[id].conn);
+	delete Connections[id];
 }

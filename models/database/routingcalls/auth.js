@@ -12,8 +12,7 @@ model.signOut 				= signOut;
 function getUserByID(userID, callback) {
     w.Connect( new w.GetByKey(config.tables.users, userID,
         function (user){ callback(null, user); },
-        function (error){ callback(error); }),
-        connections.get(userID)
+        function (error){ callback(error); })
     );
 }
 

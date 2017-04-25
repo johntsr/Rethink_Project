@@ -6,22 +6,39 @@ var profile 		= require("./profile.js");
 var emitTypes 		= require("./emittypes/index.js");
 var fparser 		= require("../../filterparser/index.js");
 var connections 	= require("./connections.js");
+var profile	 		= require("./profile.js");
 var async 			= require('async');
 
 var model 			= module.exports;
-model.newUser	 	= newUser;
+model.loginUser	 	= loginUser;
+model.logoutUser	= logoutUser;
 
-function newUser(io, id) {
+function loginUser(io, id) {
+	var numToFinish = 2;
     w.connect(
         function(conn) {
             console.log("Setting up update listener...");
-			connections.add(id, conn);
+			connections.add(id, conn, numToFinish);
             listenCurrentFilters(id);
 			emitFilters(io, id);
             emitPosts(io, id);
         }, false, connections.get(id)	// refresh reasons!
     );
 }
+
+function logoutUser(id){
+	if(connections.alive(id)){	// extra check?
+		connections.die(id);
+
+		async.parallel([ stopListeningFilters.bind(null, id), stopEmittingPosts.bind(null, id)],
+			function(error, results){
+				connections.close(id);
+			}
+		);
+
+	}
+}
+
 
 function listenCurrentFilters(id) {
 	var filter = userSelector(id);
@@ -43,11 +60,14 @@ function emitFilters(io, id){
 	var conn = connections.get(id);
 	r.table(config.tables.filters).filter(filter).changes().run(conn).then(function(cursor) {
 		cursor.each(function(error, row) {
+			if( !connections.alive(id) ){
+				return false;
+			}
+
 			emitTypes.createF(io, row).emit();
 		});
 	}).error(calls.throwError);
 }
-
 
 function emitPosts(io, id){
 	var filter = userSelector(id);
@@ -55,6 +75,11 @@ function emitPosts(io, id){
 	var conn = connections.get(id);
     r.table(config.tables.broadcast).filter(filter).changes(policy).run(conn).then(function(cursor) {
         cursor.each(function(error, row) {
+
+			if( !connections.alive(id) ){
+				return false;
+			}
+
             row = row.new_val;
             if(row){
 				var spam = false;		// TODO
@@ -94,4 +119,44 @@ function userSelector(userID){
     		value: userID
     	}
     ]).toNoSQLQuery();
+}
+
+function stopListeningFilters(id, callback){
+	var filter = userSelector(id);
+
+	var pause = function (fid, callback){
+		profile.pauseFilter(id, fid, function(results){callback(null);});
+	};
+
+	var play = function (fid, callback){
+		profile.playFilter(id, fid, function(results){callback(null);});
+	};
+
+	w.Connect( new w.GetByFilter(config.tables.filters, filter,
+	function(cursor) {
+		cursor.toArray(function(error, filters) {
+			var replay = function(filter, callback){
+				if( filter.status ===  fparser.filterStatus.PLAY ){
+					async.series([pause.bind(null, filter.id), play.bind(null, filter.id), function(){callback(null);}]);
+				}
+				else{
+					async.series([play.bind(null, filter.id), pause.bind(null, filter.id), function(){callback(null);}]);
+
+				}
+			};
+
+			var paralCalls = [];
+			for(var i = 0; i < filters.length; i++){
+				paralCalls.push( replay.bind(null, filters[i]) );
+			}
+
+			async.parallel(paralCalls, function(){ callback(null);});
+		});
+	}) , connections.get(id));
+}
+
+function stopEmittingPosts(id, callback){
+	var broadcastData = {timestamp: Math.floor(new Date() / 1000)};
+	w.Connect( new w.Insert(config.tables.broadcast, broadcastData, {}, function(){ callback(null);}
+				), connections.get(id));
 }

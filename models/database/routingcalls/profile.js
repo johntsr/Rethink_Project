@@ -85,7 +85,7 @@ function playFilter(id, filterID, callback) {
 }
 
 function updateFilterStatus(id, filterID, callback, _status) {
-	w.Connect( new w.UpdateByKey(config.tables.filters, filterID, {status: _status}), connections.get(id));
+	w.Connect( new w.UpdateByKey(config.tables.filters, filterID, {status: _status}, callback), connections.get(id));
 }
 
 function getFilters(id, table, callback) {
