@@ -37,6 +37,12 @@ function FilterInfo(_userID, filterData){
 	// TODO
 	this.filterInfo.squash = 2.0;
 
+	// this.filterInfo.frequency = frequency.create(2, 5, "m");
+	var num = 2;
+	var time = 5;
+	var unit = "m";
+	this.filterInfo.frequency = { number: num, seconds: time * this.unitMap[unit] };
+
 	if( !filterData.status ){
 		this.filterInfo.status = FILTER_STATUS.PLAY;
 	}
@@ -56,6 +62,12 @@ function FilterInfo(_userID, filterData){
 		this.appendQuery(partQuery);
 	}
 }
+
+FilterInfo.prototype.unitMap = {
+	"m" : 60,
+	"h" : 60*60,
+	"d" : 60*60*24
+};
 
 FilterInfo.prototype.appendQuery = function(partQuery){
 	'use strict';

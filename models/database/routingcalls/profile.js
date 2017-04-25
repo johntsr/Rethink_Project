@@ -7,6 +7,7 @@ var config 			= require('../../../config');
 var calls 			= require("../../callbacks.js");
 var emittypes 		= require("./emittypes/index.js");
 var sources 		= require('../../datasources/index.js');
+var broadcast 		= require('./broadcastdata.js');
 
 var model 			= module.exports;
 model.getPosts 		= getPosts;
@@ -37,6 +38,7 @@ function getPosts(callback) {
         w.cursorToArray(cursor, appendData);
     };
 
+    // TODO: '>'
 	var filter = fparser.AndExpressions([{name:'timestamp', value:timestamp, op:'<'}]).toNoSQLQuery();
 	for (var tableName of sources.tables()) {
 		w.Connect(
@@ -48,20 +50,7 @@ function getPosts(callback) {
 function addFilter(filterInfo, callback) {
     w.connect(
         function(conn) {
-			var filter = fparser.AndExpressions([
-				{
-					name: 'userID',
-					value: filterInfo.userID()
-				},
-				{
-					name: 'table',
-					value: filterInfo.table()
-				},
-				{
-					name: 'filterTitle',
-					value: filterInfo.filterTitle()
-				}
-	]).toNoSQLQuery();
+			var filter = filterSelector(filterInfo.getData());
             r.table(config.tables.filters).filter( fparser.rethinkFilter(filter) ).isEmpty().run(conn).then(
     			function(empty){
     				if( empty ){
@@ -99,16 +88,7 @@ function updateFilterStatus(filterID, callback, _status) {
 }
 
 function getFilters(userID, table, callback) {
-    var filter = fparser.AndExpressions([
-		{
-    		name: 'userID',
-    		value: userID
-    	},
-    	{
-    		name: 'table',
-    		value: table
-    	}
-    ]).toNoSQLQuery();
+    var filter = filterUserSelector(userID, table);
     w.Connect(
         new w.GetByFilter(config.tables.filters, fparser.rethinkFilter(filter),
             function (cursor){
@@ -118,24 +98,11 @@ function getFilters(userID, table, callback) {
     );
 }
 
-function listenFilter(filterInfoData) {
+function listenFilter(fInfoData) {
     var stopListen = false;
     w.connect(
         function(conn) {
-            var filter = fparser.AndExpressions([{
-            		name: 'userID',
-            		value: filterInfoData.userID
-            	},
-            	{
-            		name: 'table',
-            		value: filterInfoData.table
-            	},
-            	{
-            		name: 'filterTitle',
-            		value: filterInfoData.filterTitle
-            	}
-            ]).toNoSQLQuery();
-            r.table(config.tables.filters).filter( fparser.rethinkFilter(filter) ).changes().run(conn).then(
+            r.table(config.tables.filters).get(fInfoData.id).changes().run(conn).then(
     			function(cursor){
                     cursor.each(function(error, rowChange) {
 						stopListen = true;
@@ -150,9 +117,9 @@ function listenFilter(filterInfoData) {
 			).error(calls.throwError);
 
             var policy = {
-            	squash: filterInfoData.squash
+            	squash: fInfoData.squash
             };
-			r.table(filterInfoData.table).filter( fparser.rethinkFilter(filterInfoData.query) ).changes(policy).run(conn).then(
+			r.table(fInfoData.table).filter( fparser.rethinkFilter(fInfoData.query) ).changes(policy).run(conn).then(
                 function(cursor) {
                    cursor.each(function(error, rowChange) {
 
@@ -163,13 +130,42 @@ function listenFilter(filterInfoData) {
                        	}
 
                         if( !rowChange.error ){
-                            var postID = ( rowChange.new_val !== null )? rowChange.new_val.id : rowChange.old_val.id;
-                            var data = { filterData: filterInfoData, postData: rowChange, id: postID};
-                            w.Connect( new w.Insert(config.tables.broadcast, data), conn, false );
+                            var broadcastData = broadcast.create(fInfoData, rowChange);
+                            w.Connect( new w.Insert(config.tables.broadcast, broadcastData), conn, false );
                         }
     				});
         		}
 			).error(calls.throwError);
     	}
     );
+}
+
+
+function filterUserSelector(userID, table){
+    return fparser.AndExpressions([
+		{
+    		name: 'userID',
+    		value: userID
+    	},
+    	{
+    		name: 'table',
+    		value: table
+    	}
+    ]).toNoSQLQuery();
+}
+
+function filterSelector(fInfoData){
+    return fparser.AndExpressions([{
+            name: 'userID',
+            value: fInfoData.userID
+        },
+        {
+            name: 'table',
+            value: fInfoData.table
+        },
+        {
+            name: 'filterTitle',
+            value: fInfoData.filterTitle
+        }
+    ]).toNoSQLQuery();
 }

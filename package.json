@@ -10,18 +10,19 @@
   "author": "Esteban Herrera",
   "license": "MIT",
   "dependencies": {
+    "async": "^2.3.0",
     "body-parser": "1.15.1",
     "connect-flash": "^0.1.1",
     "cookie-parser": "latest",
     "ejs": "latest",
     "express": "4.13.4",
     "express-session": "latest",
+    "htmlspecialchars": "latest",
     "passport": "~0.1.17",
     "passport-local": "~0.1.6",
     "path": "0.12.7",
     "promise": "^7.1.1",
     "rethinkdb": "2.3.2",
-    "socket.io": "1.4.6",
-	"htmlspecialchars": "latest"
+    "socket.io": "1.4.6"
   }
 }

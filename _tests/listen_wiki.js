@@ -8,10 +8,7 @@ var r = require('rethinkdb');
 var config = require('../config');
 var w = require("../models/database/operations/index.js");
 var fparser = require('../models/filterparser/index.js');
-var EventSource = require('eventsource');
 
-var url = 'https://stream.wikimedia.org/v2/stream/recentchange';
-var eventSource = new EventSource(url);
 
 var PostsArray = [];
 var Limit = 1000;
@@ -19,21 +16,24 @@ var SaveInterval = 10;
 var DeleteInterval = 11;
 var DeleteSeconds = 5;
 
-eventSource.onopen = function (event) {
-    console.log('--- Opened connection.');
-};
-
-eventSource.onerror = function (event) {
-    console.error('--- Encountered error', event);
-};
-
-eventSource.onmessage = function(event) {
-	if( PostsArray.length < Limit ){
-	    var streamInfo = JSON.parse(event.data);
-		var dbData = wiki.create(streamInfo).getData();
-		PostsArray.push(dbData);
-	}
-};
+// var EventSource = require('eventsource');
+// var url = 'https://stream.wikimedia.org/v2/stream/recentchange';
+// var eventSource = new EventSource(url);
+// eventSource.onopen = function (event) {
+//     console.log('--- Opened connection.');
+// };
+//
+// eventSource.onerror = function (event) {
+//     console.error('--- Encountered error', event);
+// };
+//
+// eventSource.onmessage = function(event) {
+// 	if( PostsArray.length < Limit ){
+// 	    var streamInfo = JSON.parse(event.data);
+// 		var dbData = wiki.create(streamInfo).getData();
+// 		PostsArray.push(dbData);
+// 	}
+// };
 
 function saveToDB(){
 	w.Connect( new w.Insert(config.tables.wiki, PostsArray, {},
@@ -73,6 +73,31 @@ function insertOne(){
 
 
 
-for (var i = 0; i < 100; i++) {
-	setTimeout(insertOne, 0.1 * i * 1000);
+// for (var i = 0; i < 100; i++) {
+// 	setTimeout(insertOne, 0.1 * i * 1000);
+// }
+
+var async 			= require('async');
+var id1 = "326beeab-7266-4317-8a15-c76d570ec8bd", id2 = "3bb0be92-fcf2-45c2-a291-3a1b3856fdce";
+var wikis = [];
+
+function append(data){
+	wikis.push(data);
 }
+
+
+async.parallel([
+	function (callback){
+		w.Connect(new w.GetByKey(config.tables.wiki, id1, function(data){callback(null, data);}));
+	},
+
+	function (callback){
+		w.Connect(new w.GetByKey(config.tables.wiki, id2, function(data){callback(null, data);}));
+	}
+],
+	function(err, results) {
+		for (wiki of results) {
+			console.log(wiki);
+		}
+	}
+);

@@ -14,5 +14,5 @@ EmitNewPost.prototype.constructor = EmitNewPost;
 function EmitNewPost(io, filterData, postData){
 	em.EmitGeneric.call(this, io, filterData);
 	this.emitType = 'new' + filterData.table + '_';
-	this.emitData = {filterTitle: filterData.title, data: postData};
+	this.emitData = {filterTitle: filterData.filterTitle, data: postData};
 }

@@ -5,6 +5,8 @@ var calls 			= require("../../callbacks.js");
 var profile 		= require("./profile.js");
 var filters 		= require("../../filterparser/index.js");
 var emitTypes 		= require("./emittypes/index.js");
+var async 			= require('async');
+
 
 var model 			= module.exports;
 model.setup 		= setup;
@@ -45,9 +47,31 @@ function emitPosts(io, conn){
         cursor.each(function(error, row) {
             row = row.new_val;
             if(row){
-                emitTypes.createP(io, row.filterData, row.postData).emit();
-                w.Connect(new w.DeleteByKey(config.tables.broadcast, row.id), conn, false);
+				var spam = false;		// TODO
+				if( !spam ){
+					emitToUser(row);
+				}
+				else{
+					console.log("Spam!");
+				}
             }
         });
     }).error(calls.throwError);
+}
+
+function emitToUser(row){
+	async.parallel({
+		postData: function (callback){
+			w.Connect(new w.GetByKey(row.postTable, row.postID, function(data){callback(null, data);}));
+		},
+
+		filterData: function (callback){
+			w.Connect(new w.GetByKey(config.tables.filters, row.filterID, function(data){callback(null, data);}));
+		}
+	},
+		function(err, results) {
+			emitTypes.createP(io, results.filterData, results.postData).emit();
+			w.Connect(new w.DeleteByKey(config.tables.broadcast, row.id), conn, false);
+		}
+	);
 }

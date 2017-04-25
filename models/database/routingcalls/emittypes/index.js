@@ -21,11 +21,12 @@ function createF(io, rowChange){
 	}
 }
 
-function createP(io, filterData, postChange){
-	if( postChange.new_val && !postChange.old_val ){
-		return newP.create(io, filterData, postChange.new_val);
-	}
-	else{
-		return deleteP.create(io, filterData, postChange.old_val);
-	}
+function createP(io, filterData, postData){
+	// if( postChange.new_val && !postChange.old_val ){
+	// 	return newP.create(io, filterData, postChange.new_val);
+	// }
+	// else{
+	// 	return deleteP.create(io, filterData, postChange.old_val);
+	// }
+	return newP.create(io, filterData, postData);
 }
