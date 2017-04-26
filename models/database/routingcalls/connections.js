@@ -3,7 +3,6 @@ var w 				= require("../operations/index.js");
 var Connections = {};
 
 var model 			= module.exports;
-model.Connections	= Connections;
 model.add			= add;
 model.get			= get;
 model.close			= close;
