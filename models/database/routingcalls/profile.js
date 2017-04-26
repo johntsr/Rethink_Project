@@ -112,6 +112,7 @@ function listenFilter(fInfoData) {
                    cursor.each(function(error, rowChange) {
                        	if( stopListen ){
                         	w.close(cursor);
+                        	w.close(conn);
                         	return false;
                        	}
                         if( !rowChange.error ){
@@ -121,7 +122,7 @@ function listenFilter(fInfoData) {
     				});
         		}
 			).error(calls.throwError);
-    	}, false, connections.get(id)
+    	}
     );
 }
 
