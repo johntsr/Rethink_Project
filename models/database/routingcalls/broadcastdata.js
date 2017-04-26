@@ -12,6 +12,7 @@ function create(fInfoData, rowChange){
 		postID		: row.id,
 		filterID	: fInfoData.id,
 		userID		: fInfoData.userID,
+		sent		: false,
 		timestamp	: getTime()
 	};
 }
@@ -22,6 +23,7 @@ function dummy(){
 		postID		: null,
 		filterID	: null,
 		userID		: null,
+		sent		: false,
 		timestamp	: getTime()
 	};
 }

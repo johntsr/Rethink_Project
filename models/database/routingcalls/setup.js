@@ -61,6 +61,7 @@ function emitFilters(io, id){
 			r.table(config.tables.filters).filter(filter).changes().run(conn).then(function(cursor) {
 				cursor.each(function(error, row) {
 					if( !connections.alive(id) ){
+						w.close(conn);
 						return false;
 					}
 					emitTypes.createF(io, row).emit();
@@ -73,15 +74,16 @@ function emitFilters(io, id){
 function emitPosts(io, id){
 	var filter = userSelector(id);
     var policy = {squash: 1.0};
-		w.connect( function (conn){
+		w.connect(
+			function (conn){
 			r.table(config.tables.broadcast).filter(filter).changes(policy).run(conn).then(function(cursor) {
 				cursor.each(function(error, row) {
 					if( !connections.alive(id) ){
+						w.close(conn);
 						return false;
 					}
 					row = row.new_val;
-					if(row){
-						var conn = connections.get(id);
+					if(row && !row.sent){
 						async.waterfall([
 							function (callback){
 								w.Connect(new w.GetByKey(config.tables.filters, row.filterID, function(data){callback(null, data);}), conn);
@@ -91,6 +93,7 @@ function emitPosts(io, id){
 								w.Connect(new w.CountByFilter(config.tables.broadcast, filter, function(data){callback(null, filterData, data);}), conn);
 							},
 							function (filterData, count, callback){
+								w.Connect(new w.UpdateByKey(config.tables.broadcast, row.id, {sent: true}), connections.get(id));
 								if( count <= filterData.frequency.count ){
 									w.Connect(new w.GetByKey(row.postTable, row.postID, function(data){callback(null, filterData, data);}), conn);
 								}
@@ -129,6 +132,10 @@ function spamSelector(filterData){
 		{
     		name: 'filterID',
     		value: filterData.id
+    	},
+		{
+    		name: 'sent',
+    		value: true
     	},
 		{
     		name: 'timestamp',
