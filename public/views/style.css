@@ -6,6 +6,14 @@ body{
 	display:inline;
 }
 
+#filter_frequency *{
+	display: inline-block;
+}
+
+#frequency_count{
+  width: 40px;
+}
+
 ul.createFilters {
   margin: 1em;
   padding: 0;

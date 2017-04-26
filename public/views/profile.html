@@ -31,6 +31,21 @@
 
             <ul id="createFilters"> </ul>
 
+            <div id="filter_frequency">
+    			<p>
+    				<i>(optional)</i> Up to
+    			</p>
+    			<input id='frequency_count' type='number' />
+    			<p> posts per </p>
+    			<select id="frequency_time" >
+    				<option disabled selected value> -- select an option -- </option>
+    				<option value="m30"> 30 minutes </option>
+    				<option value="h2"> 2 hours </option>
+    				<option value="h8"> 8 hours </option>
+    				<option value="d1"> 1 day </option>
+    			</select>
+            </div>
+
             <form id='filter_form' method='post'>
 	            <input type='text' id='filter_title' placeholder='Title of the filter' />
                 <button id='submitFilter' type='submit'>Add Filter</button>

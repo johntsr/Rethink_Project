@@ -43,12 +43,11 @@ function FilterInfo(_userID, filterData){
 	this.filterInfo.userID = _userID;						// the db id of the user
 	this.filterInfo.query = "";								// initialize the query-string, then construct it
 
-	// TODO
 	this.filterInfo.squash = 2.0;
 
-	var num = 2;
-	var time = 5;
-	var unit = "m";
+	var unit = filterData.frequency.time.charAt(0);
+	var time = filterData.frequency.time.substring(1);
+	var num = filterData.frequency.count;
 	this.filterInfo.frequency = { count: num, seconds: time * this.unitMap[unit] };
 
 	if( !filterData.status ){

@@ -31,6 +31,15 @@ $('#filter_form').on('submit', function (event) {
 		fieldParsers[table][i].pushData(sendData);
 	}
 
+	var frequency_count = $('#frequency_count').val();
+	var frequency_time = $('#frequency_time').val();
+	if( !frequency_count || frequency_count < 1 || !frequency_time){
+		frequency_count = 2;
+		frequency_time = "m30";
+	}
+
+	sendData.add("frequency", { count: frequency_count, time: frequency_time });
+
 	sendData.send('/profile/addfilter',
 		function afterAddition(data){
 			var success = JSON.parse(data).success;
