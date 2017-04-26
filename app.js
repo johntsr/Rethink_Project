@@ -4,6 +4,7 @@
 var express = require('express');
 var app = express();
 var server = require('http').createServer(app);
+var model  = require('./models/database/routingcalls/setup.js');
 var io = require('socket.io')(server);
 var path = require('path');
 var bodyParser = require('body-parser');
@@ -41,5 +42,6 @@ var routes = require('./controllers/index')(app, passport, io);
 
 
 server.listen(config.port, function() {
+	model.setup();
     console.log('Server up and listening on port %d', config.port);
 });

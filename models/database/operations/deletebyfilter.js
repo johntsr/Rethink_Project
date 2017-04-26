@@ -1,5 +1,6 @@
-var op = require("./operation.js");
-var r = require('rethinkdb');
+var op 		= require("./operation.js");
+var r 		= require('rethinkdb');
+var fparser = require("../../filterparser/index.js");
 
 var model 		= module.exports;
 model.create	= create;
