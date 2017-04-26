@@ -13,11 +13,9 @@ var connections 	= require("./connections.js");
 var model 			= module.exports;
 model.getPosts 		= getPosts;
 model.addFilter 	= addFilter;
-model.deleteFilter 	= deleteFilter;
 model.getFilters 	= getFilters;
 model.listenFilter 	= listenFilter;
-model.pauseFilter 	= pauseFilter;
-model.playFilter 	= playFilter;
+model.setFilterStatus 	= setFilterStatus;
 
 function getPosts(id, callback) {
 	var GetSeconds = 5;
@@ -72,19 +70,7 @@ function addFilter(filterInfo, callback) {
     );
 }
 
-function deleteFilter(id, filterID, callback) {
-	updateFilterStatus(id, filterID, callback, fparser.filterStatus.DELETE);
-}
-
-function pauseFilter(id, filterID, callback) {
-	updateFilterStatus(id, filterID, callback, fparser.filterStatus.PAUSE);
-}
-
-function playFilter(id, filterID, callback) {
-	updateFilterStatus(id, filterID, callback, fparser.filterStatus.PLAY);
-}
-
-function updateFilterStatus(id, filterID, callback, _status) {
+function setFilterStatus(id, filterID, callback, _status) {
 	w.Connect( new w.UpdateByKey(config.tables.filters, filterID, {status: _status}, callback), connections.get(id));
 }
 

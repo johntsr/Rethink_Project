@@ -5,6 +5,7 @@ var andexpression 		= require("./expressiontypes/andexpression.js");
 var model 				= module.exports;
 model.createFilterInfo 	= filterinfo.create;
 model.filterStatus 		= filterinfo.STATUS;
+model.toggleStatus 		= filterinfo.toggleStatus;
 model.rethinkFilter 	= db_help.rethinkFilter;
 model.htmlSpecialChars 	= db_help.htmlSpecialChars;
 model.AndExpressions 	= andexpression.create;

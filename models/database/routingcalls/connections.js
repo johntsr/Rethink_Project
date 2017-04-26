@@ -10,9 +10,9 @@ model.close			= close;
 model.alive			= alive;
 model.die			= die;
 
-function add(id, _conn, _num){
+function add(id, _conn){
 	if( !get[id] ){
-		Connections[id] = {conn: _conn, num: _num, alive: true};
+		Connections[id] = {conn: _conn, alive: true};
 	}
 }
 

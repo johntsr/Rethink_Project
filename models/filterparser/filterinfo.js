@@ -9,12 +9,21 @@ var FILTER_STATUS = {
 
 var model 				= module.exports;
 model.create 			= create;
+model.toggleStatus		= toggleStatus;
 model.STATUS 			= FILTER_STATUS;
 
 
 function create(_userID, filterData){
 	'use strict';
 	return new FilterInfo(_userID, filterData);
+}
+
+function toggleStatus(status){
+	switch (status) {
+		case FILTER_STATUS.PLAY		: return FILTER_STATUS.PAUSE;
+		case FILTER_STATUS.PAUSE	: return FILTER_STATUS.PLAY;
+		default: console.log("Error in toggle!"); return undefined;
+	}
 }
 
 

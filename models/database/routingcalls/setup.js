@@ -1,3 +1,4 @@
+var async 			= require('async');
 var r               = require('rethinkdb');
 var w 				= require("../operations/index.js");
 var config 			= require('../../../config');
@@ -6,19 +7,16 @@ var profile 		= require("./profile.js");
 var emitTypes 		= require("./emittypes/index.js");
 var fparser 		= require("../../filterparser/index.js");
 var connections 	= require("./connections.js");
-var profile	 		= require("./profile.js");
-var async 			= require('async');
 
 var model 			= module.exports;
 model.loginUser	 	= loginUser;
 model.logoutUser	= logoutUser;
 
 function loginUser(io, id) {
-	var numToFinish = 2;
     w.connect(
         function(conn) {
             console.log("Setting up update listener...");
-			connections.add(id, conn, numToFinish);
+			connections.add(id, conn);
             listenCurrentFilters(id);
 			emitFilters(io, id);
             emitPosts(io, id);
@@ -63,7 +61,6 @@ function emitFilters(io, id){
 			if( !connections.alive(id) ){
 				return false;
 			}
-
 			emitTypes.createF(io, row).emit();
 		});
 	}).error(calls.throwError);
@@ -75,11 +72,9 @@ function emitPosts(io, id){
 	var conn = connections.get(id);
     r.table(config.tables.broadcast).filter(filter).changes(policy).run(conn).then(function(cursor) {
         cursor.each(function(error, row) {
-
 			if( !connections.alive(id) ){
 				return false;
 			}
-
             row = row.new_val;
             if(row){
 				var spam = false;		// TODO
@@ -105,7 +100,6 @@ function emitToUser(io, conn, row){
 		}
 	},
 		function(err, results) {
-			console.log("Done!");
 			emitTypes.createP(io, results.filterData, results.postData).emit();
 			// w.Connect(new w.DeleteByKey(config.tables.broadcast, row.id), conn);
 		}
@@ -124,30 +118,20 @@ function userSelector(userID){
 function stopListeningFilters(id, callback){
 	var filter = userSelector(id);
 
-	var pause = function (fid, callback){
-		profile.pauseFilter(id, fid, function(results){callback(null);});
-	};
-
-	var play = function (fid, callback){
-		profile.playFilter(id, fid, function(results){callback(null);});
+	var setStatus = function (fid, status, callback){
+		profile.setFilterStatus(id, fid, function(results){callback(null);}, status);
 	};
 
 	w.Connect( new w.GetByFilter(config.tables.filters, filter,
 	function(cursor) {
 		cursor.toArray(function(error, filters) {
-			var replay = function(filter, callback){
-				if( filter.status ===  fparser.filterStatus.PLAY ){
-					async.series([pause.bind(null, filter.id), play.bind(null, filter.id), function(){callback(null);}]);
-				}
-				else{
-					async.series([play.bind(null, filter.id), pause.bind(null, filter.id), function(){callback(null);}]);
-
-				}
+			var toggle = function(fid, status, callback){
+				async.series([setStatus.bind(null, fid, fparser.toggleStatus(status)), setStatus.bind(null, fid, status), function(){callback(null);}]);
 			};
 
 			var paralCalls = [];
 			for(var i = 0; i < filters.length; i++){
-				paralCalls.push( replay.bind(null, filters[i]) );
+				paralCalls.push( toggle.bind(null, filters[i].id, filters[i].status) );
 			}
 
 			async.parallel(paralCalls, function(){ callback(null);});
@@ -156,7 +140,7 @@ function stopListeningFilters(id, callback){
 }
 
 function stopEmittingPosts(id, callback){
-	var broadcastData = {timestamp: Math.floor(new Date() / 1000)};
-	w.Connect( new w.Insert(config.tables.broadcast, broadcastData, {}, function(){ callback(null);}
+	var dummyBroadcast = {timestamp: Math.floor(new Date() / 1000)};
+	w.Connect( new w.Insert(config.tables.broadcast, dummyBroadcast, {}, function(){ callback(null);}
 				), connections.get(id));
 }

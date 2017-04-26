@@ -94,38 +94,38 @@ module.exports = function (app, passport, io) {
 
     app.delete('/profile/filters/delete', isLoggedIn, function(req,res){
         var filterID = req.body.id;
-		db.deleteFilter(req.user.id, filterID, function (success, result) {
+		db.setFilterStatus(req.user.id, filterID, function (success, result) {
             if (success) res.json({
                 status: 'OK'
             });
             else res.json({
                 status: 'Error'
             });
-        });
+        }, filters.filterStatus.DELETE);
 	});
 
 	app.post('/profile/filters/pause', isLoggedIn, function(req,res){
         var filterID = req.body.id;
-		db.pauseFilter(req.user.id, filterID, function (success, result) {
+		db.setFilterStatus(req.user.id, filterID, function (success, result) {
             if (success) res.json({
                 status: 'OK'
             });
             else res.json({
                 status: 'Error'
             });
-        });
+        }, filters.filterStatus.PAUSE);
 	});
 
 	app.post('/profile/filters/play', isLoggedIn, function(req,res){
         var filterID = req.body.id;
-		db.playFilter(req.user.id, filterID, function (success, result) {
+		db.setFilterStatus(req.user.id, filterID, function (success, result) {
             if (success) res.json({
                 status: 'OK'
             });
             else res.json({
                 status: 'Error'
             });
-        });
+        }, filters.filterStatus.PLAY);
 	});
 };
 
