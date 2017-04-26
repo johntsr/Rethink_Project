@@ -3,10 +3,11 @@ var r               = require('rethinkdb');
 var w 				= require("../operations/index.js");
 var config 			= require('../../../config');
 var calls 			= require("../../callbacks.js");
-var profile 		= require("./profile.js");
 var emitTypes 		= require("./emittypes/index.js");
 var fparser 		= require("../../filterparser/index.js");
+var profile 		= require("./profile.js");
 var connections 	= require("./connections.js");
+var broadcastdata 	= require("./broadcastdata.js");
 
 var model 			= module.exports;
 model.loginUser	 	= loginUser;
@@ -77,33 +78,32 @@ function emitPosts(io, id){
 			}
             row = row.new_val;
             if(row){
-				var spam = false;		// TODO
-				if( !spam ){
-					emitToUser(io, conn, row);
-				}
-				else{
-					console.log("Spam!");
-				}
+				var conn = connections.get(id);
+				async.waterfall([
+					function (callback){
+						w.Connect(new w.GetByKey(config.tables.filters, row.filterID, function(data){callback(null, data);}), conn);
+					},
+					function (filterData, callback){
+						var filter = spamSelector(filterData);
+						w.Connect(new w.CountByFilter(config.tables.broadcast, filter, function(data){callback(null, filterData, data);}), conn);
+					},
+					function (filterData, count, callback){
+						if( count <= filterData.frequency.count ){
+							w.Connect(new w.GetByKey(row.postTable, row.postID, function(data){callback(null, filterData, data);}), conn);
+						}
+						else{
+							callback(null, null, null);
+						}
+					},
+					function (filterData, postData, callback){
+						if( postData ){
+							emitTypes.createP(io, filterData, postData).emit();
+						}
+					}
+				]);
             }
         });
     }).error(calls.throwError);
-}
-
-function emitToUser(io, conn, row){
-	async.parallel({
-		postData: function (callback){
-			w.Connect(new w.GetByKey(row.postTable, row.postID, function(data){callback(null, data);}), conn);
-		},
-
-		filterData: function (callback){
-			w.Connect(new w.GetByKey(config.tables.filters, row.filterID, function(data){callback(null, data);}), conn);
-		}
-	},
-		function(err, results) {
-			emitTypes.createP(io, results.filterData, results.postData).emit();
-			// w.Connect(new w.DeleteByKey(config.tables.broadcast, row.id), conn);
-		}
-	);
 }
 
 function userSelector(userID){
@@ -111,6 +111,25 @@ function userSelector(userID){
 		{
     		name: 'userID',
     		value: userID
+    	}
+    ]).toNoSQLQuery();
+}
+
+function spamSelector(filterData){
+	var currentTime = broadcastdata.getTime() - filterData.frequency.seconds;
+	return fparser.AndExpressions([
+		{
+    		name: 'userID',
+    		value: filterData.userID
+    	},
+		{
+    		name: 'filterID',
+    		value: filterData.id
+    	},
+		{
+    		name: 'timestamp',
+			op:	'>',
+    		value: currentTime
     	}
     ]).toNoSQLQuery();
 }
@@ -140,7 +159,7 @@ function stopListeningFilters(id, callback){
 }
 
 function stopEmittingPosts(id, callback){
-	var dummyBroadcast = {timestamp: Math.floor(new Date() / 1000)};
+	var dummyBroadcast = broadcastdata.dummy();
 	w.Connect( new w.Insert(config.tables.broadcast, dummyBroadcast, {}, function(){ callback(null);}
 				), connections.get(id));
 }

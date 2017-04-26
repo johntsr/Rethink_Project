@@ -49,7 +49,7 @@ function FilterInfo(_userID, filterData){
 	var num = 2;
 	var time = 5;
 	var unit = "m";
-	this.filterInfo.frequency = { number: num, seconds: time * this.unitMap[unit] };
+	this.filterInfo.frequency = { count: num, seconds: time * this.unitMap[unit] };
 
 	if( !filterData.status ){
 		this.filterInfo.status = FILTER_STATUS.PLAY;

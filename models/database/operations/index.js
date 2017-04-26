@@ -4,6 +4,7 @@ var deletebykey 		= require("./deletebykey.js");
 var deletebyfilter 		= require("./deletebyfilter.js");
 var getbykey 			= require("./getbykey.js");
 var getbyfilter 		= require("./getbyfilter.js");
+var countbyfilter 		= require("./countbyfilter.js");
 var updatebykey 		= require("./updatebykey.js");
 
 var model 				= module.exports;
@@ -18,4 +19,5 @@ model.DeleteByKey 		= deletebykey.create;
 model.DeleteByFilter	= deletebyfilter.create;
 model.GetByKey 			= getbykey.create;
 model.GetByFilter 		= getbyfilter.create;
+model.CountByFilter	 	= countbyfilter.create;
 model.UpdateByKey	 	= updatebykey.create;

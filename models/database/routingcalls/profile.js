@@ -110,13 +110,10 @@ function listenFilter(fInfoData) {
 			r.table(fInfoData.table).filter( fparser.rethinkFilter(fInfoData.query) ).changes(policy).run(conn).then(
                 function(cursor) {
                    cursor.each(function(error, rowChange) {
-
                        	if( stopListen ){
                         	w.close(cursor);
-                        	w.close(conn);
                         	return false;
                        	}
-
                         if( !rowChange.error ){
                             var broadcastData = broadcast.create(fInfoData, rowChange);
                             w.Connect( new w.Insert(config.tables.broadcast, broadcastData), conn);
