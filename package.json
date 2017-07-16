@@ -17,6 +17,7 @@
     "ejs": "latest",
     "express": "4.13.4",
     "express-session": "latest",
+    "express-logger": "latest",
     "htmlspecialchars": "latest",
     "passport": "~0.1.17",
     "passport-local": "~0.1.6",

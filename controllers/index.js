@@ -9,50 +9,57 @@ var path 	= require('path');
 
 module.exports = function (app, passport, io) {
 
-	app.get('/', function (req, res) {
-		res.redirect('/login');
-	});
+		app.get('/', function (req, res) {
+			res.redirect('/login');
+		});
 
-	app.get('/login', function (req, res) {
-		res.render(path.resolve('public/views/login'), {
-        message: req.flash('message')
-    	} );
-	});
+		app.get('/login', function (req, res) {
+			res.render(path.resolve('public/views/login'), {
+	        message: req.flash('message')
+	    	} );
+		});
 
-	app.post('/login', passport.authenticate('local-login', {
-		successRedirect : '/profile',	 // redirect to the secure profile section
-		failureRedirect : '/login', 	// redirect back to the signup page if there is an error
-        failureFlash: true
-        }));
+		app.post('/login', passport.authenticate('local-login', {
+			successRedirect : '/profile',	 // redirect to the secure profile section
+			failureRedirect : '/login', 	// redirect back to the signup page if there is an error
+      failureFlash: true
+      })
+		);
 
     app.post('/logout', function(req, res) {
-        setup.logoutUser(req.user.id);
-		req.logout();
-		res.redirect('/login');
-	});
+      setup.logoutUser(req.user.id);
+			req.logout();
+			res.redirect('/login');
+		});
 
     app.post('/signin', function(req, res) {
-        var username = req.body.username;
-        var password = req.body.password;
-		auth.signIn(username, password,
-            function(_success){
-                res.send( JSON.stringify({success: _success}) );
-            }
-        );
-	});
+      var username = req.body.username;
+      var password = req.body.password;
+			auth.signIn(username, password,
+          function(_success){
+              res.send( JSON.stringify({success: _success}) );
+          }
+      );
+		});
 
-	app.post('/signout', function(req, res) {
-		req.logout();
-		auth.signOut(req.user.id);
-		res.redirect('/login');
-	});
+		app.post('/signout', function(req, res) {
+			req.logout();
+			auth.signOut(req.user.id);
+			res.redirect('/login');
+		});
 
 
+		// NOTE: may not be accessed via web interface
+		app.post('/sources', function(req, res) {
+			sources.addTable(req.body.table, req.body.fieldsInfo);
+			res.send( 'OK' );
+		});
 
-	app.get('/profile', isLoggedIn, function (req, res) {
-		setup.loginUser(io, req.user.id);
-		res.sendFile( path.resolve( path.resolve('public/views/profile.html')) );
-	});
+
+		app.get('/profile', isLoggedIn, function (req, res) {
+			setup.loginUser(io, req.user.id);
+			res.sendFile( path.resolve( path.resolve('public/views/profile.html')) );
+		});
 
     app.get('/profile/getposts', isLoggedIn, function (req, res) {
         db.getPosts(req.user.id, function (result) {
@@ -61,10 +68,10 @@ module.exports = function (app, passport, io) {
     });
 
     app.get('/profile/fieldsInfo', isLoggedIn, function (req, res) {
-		var tableInfo = {};
-		for (var tableName of sources.tables()) {
-			tableInfo[tableName] = sources.fieldsInfo(tableName);
-		}
+				var tableInfo = {};
+				for (var tableName of sources.tables()) {
+					tableInfo[tableName] = sources.fieldsInfo(tableName);
+				}
 
         var response = { "tableInfo": tableInfo, id: req.user.id};
         res.send( JSON.stringify(response) );
@@ -81,20 +88,20 @@ module.exports = function (app, passport, io) {
         });
     });
 
-	app.get('/profile/templates', isLoggedIn, function (req, res) {
-        res.sendFile( path.resolve(path.resolve('public/views/templates.html') ) );
-    });
+		app.get('/profile/templates', isLoggedIn, function (req, res) {
+	        res.sendFile( path.resolve(path.resolve('public/views/templates.html') ) );
+	    });
 
-	app.post('/profile/addfilter', isLoggedIn, function (req, res) {
-		db.addFilter(filters.createFilterInfo(req.user.id, req.body.userData),
-        function(_success){
-            res.send( JSON.stringify({success: _success}) );
-        });
-    });
+		app.post('/profile/addfilter', isLoggedIn, function (req, res) {
+			db.addFilter(filters.createFilterInfo(req.user.id, req.body.userData),
+	        function(_success){
+	            res.send( JSON.stringify({success: _success}) );
+	        });
+	    });
 
     app.delete('/profile/filters/delete', isLoggedIn, function(req,res){
         var filterID = req.body.id;
-		db.setFilterStatus(req.user.id, filterID, function (success, result) {
+				db.setFilterStatus(req.user.id, filterID, function (success, result) {
             if (success) res.json({
                 status: 'OK'
             });
@@ -102,7 +109,7 @@ module.exports = function (app, passport, io) {
                 status: 'Error'
             });
         }, filters.filterStatus.DELETE);
-	});
+			});
 
 	app.post('/profile/filters/pause', isLoggedIn, function(req,res){
         var filterID = req.body.id;
@@ -114,11 +121,11 @@ module.exports = function (app, passport, io) {
                 status: 'Error'
             });
         }, filters.filterStatus.PAUSE);
-	});
+			});
 
 	app.post('/profile/filters/play', isLoggedIn, function(req,res){
         var filterID = req.body.id;
-		db.setFilterStatus(req.user.id, filterID, function (success, result) {
+				db.setFilterStatus(req.user.id, filterID, function (success, result) {
             if (success) res.json({
                 status: 'OK'
             });
@@ -126,7 +133,7 @@ module.exports = function (app, passport, io) {
                 status: 'Error'
             });
         }, filters.filterStatus.PLAY);
-	});
+			});
 };
 
 function isLoggedIn(req, res, next) {

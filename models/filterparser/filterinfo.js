@@ -62,10 +62,10 @@ function FilterInfo(_userID, filterData){
 	// so, first apply the expression (column constraint)
 	// and, in the loop, append the rest of the expression with an 'AND'
 
-	var partQuery = sources.createFilterParser(this.table(), filters[0]).toNoSQLQuery();
+	var partQuery = sources.createFilterParser(filters[0]).toNoSQLQuery();
 	this.appendQuery(partQuery);
 	for(var i = 1; i < filters.length; i++){
-		partQuery = db_help.noSQL_AND(sources.createFilterParser(this.table(), filters[i]).toNoSQLQuery());
+		partQuery = db_help.noSQL_AND(sources.createFilterParser(filters[i]).toNoSQLQuery());
 		this.appendQuery(partQuery);
 	}
 }

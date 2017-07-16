@@ -4,6 +4,7 @@ var garbageSelector = require("./setup/selectors.js").garbageSelector;
 var w 				= require("../operations/index.js");
 var broadcast 		= require('../../../config').tables.broadcast;
 var getTime 		= require("./broadcastdata.js").getTime;
+var sources = require("../../datasources/index.js");
 
 
 var model 			= module.exports;
@@ -23,4 +24,5 @@ function setup() {
 
 	filter = garbageSelector(secondsInDay);
 	setInterval(clearBroadcasts, 2 * secondsInDay * 1000);
+	sources.init();
 }

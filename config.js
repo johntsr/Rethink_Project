@@ -8,10 +8,10 @@ module.exports = {
 	},
 
 	tables: {
-		wiki: "Wiki",
-		users: "Users",
+		users: 'Users',
 		broadcast: 'Broadcast',
-		filters: 'Filters'
+		filters: 'Filters',
+		sources: 'Sources'
 	},
 
 

@@ -1,20 +1,49 @@
 var config 					= require("../../config.js");
-var wiki 					= require("./wikipost.js");
+var w 							= require("../database/operations/index.js");
 
 var model 					= module.exports;
+model.init					= init;
+model.addTable			= addTable;
 model.createFilterParser	= createFilterParser;
-model.tables				= tables;
+model.tables					= tables;
 model.fieldsInfo			= fieldsInfo;
 model.tablesNum				= tablesNum;
 
 model.Tables				= 	{};
-model.Tables[config.tables.wiki] = wiki;
 
+function init(){
+	w.Connect(
+		new w.GetAll(config.tables.sources, function (cursor){
+				w.cursorToArray(cursor, function (results){
+					for (var i = 0; i < results.length; i++) {
+						model.Tables[results[i].table] = results[i].fieldsInfo;
+					}
+				});
+		})
+	);
+}
+
+function addTable(tableName, fieldsInfo){
+	if( model.Tables[tableName] ){
+		return;
+	}
+
+	w.Connect( new w.Insert(config.tables.sources, {table: tableName, fieldsInfo: fieldsInfo}, {},
+		function (result) {
+			model.Tables[tableName] = fieldsInfo;
+		})
+	);
+}
 
 // create a "FilterParser" based on a user "option"
-function createFilterParser(table, filter){
-	filter.table = table;
-	return model.Tables[table].createFilterParser(filter);
+function createFilterParser(filter){
+	'use strict';
+	switch ( filter.type ) {
+		case "boolean": return boolParser.create(filter);
+		case "multiple": return multiParser.create(filter);
+		case "string": return stringParser.create(filter);
+		default: return null;
+	}
 }
 
 function tables(){
@@ -28,9 +57,9 @@ function tables(){
 }
 
 function fieldsInfo(table){
-	return model.Tables[table].FieldsInfo;
+	return model.Tables[table];
 }
 
 function tablesNum(){
-	return Object.keys(model.Tables).length;
+	return tables().length;
 }
