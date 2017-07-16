@@ -8,6 +8,7 @@ model.createFilterParser	= createFilterParser;
 model.tables					= tables;
 model.fieldsInfo			= fieldsInfo;
 model.tablesNum				= tablesNum;
+model.addData				= addData;
 
 model.Tables				= 	{};
 
@@ -35,6 +36,16 @@ function addTable(tableName, fieldsInfo){
 	      new w.CreateTable(tableName)
 	    );
 		})
+	);
+}
+
+function addData(tableName, data){
+	if( !model.Tables[tableName] ){
+		return;
+	}
+
+	w.Connect(
+		new w.Insert(tableName, data)
 	);
 }
 

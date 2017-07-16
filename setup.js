@@ -3,11 +3,6 @@ var w         = require("./models/database/operations/index.js");
 var sources   = require("./models/datasources/index.js");
 var config    = require("./config.js");
 
-// admin password: can't do it from here!
-// w.Connect(
-//   new w.UpdateByKey(config.tables.users, 'admin', {password: config.database.password})
-// );
-
 // create the db
 w.Connect(
   new w.CreateDB(config.database.db, function (data){

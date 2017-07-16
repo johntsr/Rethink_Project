@@ -55,6 +55,15 @@ module.exports = function (app, passport, io) {
 			res.send( 'OK' );
 		});
 
+		app.post('/sources/:sourceName', function(req, res) {
+			console.log('source = ' + req.params.sourceName);
+			console.log('data = ' + req.body);
+			console.log(req.body);
+			console.log('');
+			sources.addData(req.params.sourceName, req.body);
+			res.send( 'OK' );
+		});
+
 
 		app.get('/profile', isLoggedIn, function (req, res) {
 			setup.loginUser(io, req.user.id);
@@ -111,19 +120,19 @@ module.exports = function (app, passport, io) {
         }, filters.filterStatus.DELETE);
 			});
 
-	app.post('/profile/filters/pause', isLoggedIn, function(req,res){
-        var filterID = req.body.id;
-		db.setFilterStatus(req.user.id, filterID, function (success, result) {
-            if (success) res.json({
-                status: 'OK'
-            });
-            else res.json({
-                status: 'Error'
-            });
-        }, filters.filterStatus.PAUSE);
-			});
+		app.post('/profile/filters/pause', isLoggedIn, function(req,res){
+	        var filterID = req.body.id;
+			db.setFilterStatus(req.user.id, filterID, function (success, result) {
+	            if (success) res.json({
+	                status: 'OK'
+	            });
+	            else res.json({
+	                status: 'Error'
+	            });
+	        }, filters.filterStatus.PAUSE);
+				});
 
-	app.post('/profile/filters/play', isLoggedIn, function(req,res){
+		app.post('/profile/filters/play', isLoggedIn, function(req,res){
         var filterID = req.body.id;
 				db.setFilterStatus(req.user.id, filterID, function (success, result) {
             if (success) res.json({
