@@ -6,12 +6,20 @@ TypeField.prototype.fieldName = function(){
 	return this.field.name;
 };
 
+TypeField.prototype.fieldType = function(){
+	return this.field.type;
+};
+
 TypeField.prototype.fieldMessage = function(){
 	return this.field.message;
 };
 
 TypeField.prototype.storeName = function(myData){
 	myData.name = this.fieldName();
+};
+
+TypeField.prototype.storeType = function(myData){
+	myData.type = this.fieldType();
 };
 
 TypeField.prototype.storeFilterData = function(data, myData){
@@ -41,6 +49,7 @@ BoolField.prototype.pushData = function(data){
 	if( !checked ){
 		var myData = {};
 		this.storeName(myData);
+		this.storeType(myData);
 		myData.value = checked;
 		this.storeFilterData(data, myData);
 	}
@@ -68,6 +77,7 @@ MultipleField.prototype.constructor = MultipleField;
 MultipleField.prototype.pushData = function(data){
 	var myData = {};
 	this.storeName(myData);
+	this.storeType(myData);
 	myData.value = {};
 
 	var empty = true;
@@ -121,6 +131,7 @@ StringField.prototype.pushData = function(data){
 	if( text.trim().length !== 0 ){
 		var myData = {};
 		this.storeName(myData);
+		this.storeType(myData);
 		myData.value = text;
 		this.storeFilterData(data, myData);
 	}

@@ -1,5 +1,9 @@
 var config 					= require("../../config.js");
 var w 							= require("../database/operations/index.js");
+var boolParser    	= require("../filterparser/parsers/boolparser.js");
+var multiParser     = require("../filterparser/parsers/multipleparser.js");
+var stringParser    = require("../filterparser/parsers/stringparser.js");
+
 
 var model 					= module.exports;
 model.init					= init;

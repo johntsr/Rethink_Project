@@ -56,10 +56,6 @@ module.exports = function (app, passport, io) {
 		});
 
 		app.post('/sources/:sourceName', function(req, res) {
-			console.log('source = ' + req.params.sourceName);
-			console.log('data = ' + req.body);
-			console.log(req.body);
-			console.log('');
 			sources.addData(req.params.sourceName, req.body);
 			res.send( 'OK' );
 		});

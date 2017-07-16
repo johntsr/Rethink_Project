@@ -7,7 +7,7 @@ var request = require('request');
 
 var sendMore = true;
 var PostsArray = [];
-var Limit = 1;
+var Limit = 15;
 var SaveInterval = 10;
 var DeleteInterval = 11;
 var DeleteSeconds = 5;
@@ -28,9 +28,14 @@ eventSource.onmessage = function(event) {
 	    var dbData = JSON.parse(event.data);
 			PostsArray.push(dbData);
 	}
-	else if( sendMore ) {
-		saveToDB(PostsArray[0]);
-		sendMore = false;
+	else {
+		for(var i = 0; i < PostsArray.length; i++){
+			if( i == PostsArray.length - 1){
+				sendMore = false;
+			}
+			saveToDB(PostsArray[i]);
+
+		}
 	}
 };
 
@@ -43,11 +48,14 @@ function saveToDB(data){
         if (!error && response.statusCode == 200) {
             console.log(body)
         }
-				else{
-					console.log('Error!');
-					console.log(response);
-				}
-				process.exit();
+	else{
+		console.log('Error!');
+		console.log(response);
+	}
+
+	if( !sendMore ){
+		process.exit();
+	}
     }
 	);
 	// var post_data = JSON.stringify(PostsArray[0]);

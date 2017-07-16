@@ -57,6 +57,9 @@ function FilterInfo(_userID, filterData){
 	// first, get the options of the filter
 	// ie. the column names of the matching table are meant, as defined in "FieldsInfo" table (models/wikipost.js)
 	var filters = filterData.filterOptions;
+  for(var i = 0; i < filters.length; i++){
+    filters[i].table = this.filterInfo.table;
+  }
 
 	// reg. expr. of the query: "(expression)('AND'(expression))*"
 	// so, first apply the expression (column constraint)

@@ -1,6 +1,7 @@
 var r 				= require('rethinkdb');
 var w         = require("./models/database/operations/index.js");
 var sources   = require("./models/datasources/index.js");
+var auth 	    = require('./models/database/routingcalls/auth.js');
 var config    = require("./config.js");
 
 // create the db
@@ -13,6 +14,17 @@ w.Connect(
       new w.CreateTable(config.tables.filters)
     );
     w.Connect(
+      new w.CreateTable(config.tables.users, {},
+        function(data) {
+          auth.signIn('test-user', 'test-user',
+              function(_success){
+                  console.log('Successful user creation.');
+              }
+          );
+        }
+      )
+    );
+    w.Connect(
       new w.CreateTable(config.tables.sources, {},
         function(data) {
           sources.addTable('Wiki',
@@ -22,7 +34,7 @@ w.Connect(
                         choices: ["new", "edit", "log", "categorize", "external"]},
               {name: "title" , type: "string", message: "Match string in post title"}
             ]
-          )
+          );
         })
     );
   })
