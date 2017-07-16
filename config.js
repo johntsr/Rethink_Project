@@ -14,6 +14,5 @@ module.exports = {
 		sources: 'Sources'
 	},
 
-
 	port: process.env.APP_PORT || 3000
 };

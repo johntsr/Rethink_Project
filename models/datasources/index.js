@@ -31,6 +31,9 @@ function addTable(tableName, fieldsInfo){
 	w.Connect( new w.Insert(config.tables.sources, {table: tableName, fieldsInfo: fieldsInfo}, {},
 		function (result) {
 			model.Tables[tableName] = fieldsInfo;
+			w.Connect(
+	      new w.CreateTable(tableName)
+	    );
 		})
 	);
 }

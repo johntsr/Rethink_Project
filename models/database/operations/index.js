@@ -7,6 +7,8 @@ var getbykey 			= require("./getbykey.js");
 var getbyfilter 		= require("./getbyfilter.js");
 var countbyfilter 		= require("./countbyfilter.js");
 var updatebykey 		= require("./updatebykey.js");
+var createdb 		= require("./createdb.js");
+var createtable 		= require("./createtable.js");
 
 var model 				= module.exports;
 model.cursorToArray 	= conn.cursorToArray;
@@ -23,3 +25,5 @@ model.GetAll          = getall.create;
 model.GetByFilter 		= getbyfilter.create;
 model.CountByFilter	 	= countbyfilter.create;
 model.UpdateByKey	 	= updatebykey.create;
+model.CreateDB	 	= createdb.create;
+model.CreateTable	 	= createtable.create;
