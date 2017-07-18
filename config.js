@@ -1,8 +1,10 @@
+// rethinkdb --port-offset 1  --directory rethinkdb_data2
+
 module.exports = {
 	database: {
-		db: process.env.RDB_DB || "LiveUpdatesDB",
-		host: process.env.RDB_HOST || "localhost",
-		port: process.env.RDB_PORT || 28015,
+		db: "LiveUpdatesDB",
+		host: "localhost",
+		port: 28015,
 		user: "admin",
 		password: "SKATEBOARD"
 	},
@@ -14,5 +16,13 @@ module.exports = {
 		sources: 'Sources'
 	},
 
-	port: process.env.APP_PORT || 3000
+	emitDatabase: {
+		db: "EmitDB",
+		host: "localhost",
+		port: 28016,
+		user: "admin",
+		password: ""
+	},
+
+	port: 3000
 };

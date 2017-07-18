@@ -7,7 +7,7 @@ var request = require('request');
 
 var sendMore = true;
 var PostsArray = [];
-var Limit = 15;
+var Limit = 1;
 var SaveInterval = 10;
 var DeleteInterval = 11;
 var DeleteSeconds = 5;

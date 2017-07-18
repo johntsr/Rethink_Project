@@ -1,36 +1,51 @@
 var r 				= require('rethinkdb');
 var calls 			= require("../../callbacks.js");
 var config 			= require('../../../config');
+var Insert 				= require("./insert.js").create;
+var CreateTable 	= require("./createtable.js").create;
 
-var model 			= module.exports;
+var model 			  = module.exports;
 model.connect 		= connect;
 model.Connect 		= Connect;
+model.ConnectToDB = ConnectToDB;
 model.cursorToArray = cursorToArray;
 model.cursorToField = cursorToField;
 model.close 		= close;
 
-function connect(callback, errCallback, conn){
-    if(!errCallback){
-        errCallback = calls.throwError;
-    }
+function connect(callback, errCallback, conn, db){
+  if(!errCallback){
+      errCallback = calls.throwError;
+  }
+
+  if(!db){
+      db = config.database;
+  }
 
 	if(!conn){
-		r.connect(config.database).then(callback).error(errCallback);
+		r.connect(db).then(callback).error(errCallback);
 	}
 	else{
 		callback(conn);
 	}
 }
 
-function Connect(obj, conn, closeFlag){
-    var errCallback = calls.throwError;
+function ConnectToDB(db, obj, conn, closeFlag){
+  Connect(obj, conn, closeFlag, db);
+}
+
+function Connect(obj, conn, closeFlag, db){
+  var errCallback = calls.throwError;
+
+  if(!db){
+      db = config.database;
+  }
 
 	if(!closeFlag){
 		closeFlag = false;
 	}
 
 	if(!conn){
-	    r.connect(config.database).bind(obj).then(
+	    r.connect(db).bind(obj).then(
 	        function (newConn){
 	            runAndClose(newConn, obj, true);
 	        }
