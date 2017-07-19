@@ -27,7 +27,8 @@ tree := tree **AND** tree
       | basic_filter
 
  basic_filter :=  {
-                    name: *bool_field_name*
+                    name: *bool_field_name*,
+                    value: true/false
                   }
                |  {
                     name: *number_field_name*,
@@ -47,9 +48,9 @@ tree := tree **AND** tree
 The filters are expressed as a json object that represents the above abstract tree. A node in the tree is:
 ```
 {
-  type: *and, or, not, simple*,
-  left: *left sub-tree*,
-  right: *right sub-tree*
+  type: "and"|"or"|"not"|"simple",
+  left: left sub-tree,
+  right: right sub-tree
 }
 ```
 
