@@ -20,7 +20,7 @@ A third-party application may listen to the public rethinkdb server for notifica
 A basic filter creation user interface is provided by the web interace. There, the user option are chained with the **AND** operator.
 
 For more complex fitlers, one must send the tree structure of the filter and the app server will construct the Rethinkdb query. This tree can be described as:
-
+```
 tree := tree **AND** tree
       | tree **OR** tree
       | **NOT** tree
@@ -43,22 +43,25 @@ tree := tree **AND** tree
                     name: *multiple_choice_field_name*,
                     value: [*array of true/false, meaning whether the i-th option is valid*]
                   }
-                  
+```                  
 The filters are expressed as a json object that represents the above abstract tree. A node in the tree is:
+```
 {
   type: *and, or, not, simple*,
   left: *left sub-tree*,
   right: *right sub-tree*
 }
+```
 
 In case of **simple** type, the **left** field holds the **basic_filter**.
 Examples of filters:
-- {
+
+```{
   type: "simple",
   left: { name: "title", value: "just a title" }
 }
 
-- {
+{
   type: "and",
   left: {
     type: "simple",
@@ -69,3 +72,4 @@ Examples of filters:
     left: { name: "count", op: ">", value: "2" }
   }
 }
+```
