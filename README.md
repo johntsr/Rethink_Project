@@ -74,3 +74,6 @@ Examples of filters:
   }
 }
 ```
+
+## Authentication
+The app server uses the [passport](http://passportjs.org/) module, specifically the passport-local. Thus, a third-party application must first login and then use cookies when accessing a protected api.
