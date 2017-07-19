@@ -20,5 +20,5 @@ BoolParser.prototype.constructor = BoolParser;
 // simply demand that this column is "false"
 BoolParser.prototype.toNoSQLQuery = function(){
 	'use strict';
-	return this.genericOp("=", false);
+	return this.genericOp("=", this.filter.value);
 };

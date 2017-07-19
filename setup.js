@@ -31,7 +31,7 @@ w.ConnectToDB(config.emitDatabase,
             function() {
               sources.addTable('Wiki',
                 [
-                  {name: "bot" , type: "boolean", message: "Check if bots are welcome"} ,
+                  {name: "bot" , type: "boolean", message: "Check if bots are not welcome"} ,
                   {name: "type", type: "multiple", message: "Check the type(s) of posts you are interested in",
                             choices: ["new", "edit", "log", "categorize", "external"]},
                   {name: "title" , type: "string", message: "Match string in post title"}

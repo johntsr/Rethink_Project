@@ -50,7 +50,7 @@ BoolField.prototype.pushData = function(data){
 		var myData = {};
 		this.storeName(myData);
 		this.storeType(myData);
-		myData.value = checked;
+		myData.value = false;
 		this.storeFilterData(data, myData);
 	}
 };

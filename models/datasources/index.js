@@ -3,7 +3,7 @@ var w 							= require("../database/operations/index.js");
 var boolParser    	= require("../filterparser/parsers/boolparser.js");
 var multiParser     = require("../filterparser/parsers/multipleparser.js");
 var stringParser    = require("../filterparser/parsers/stringparser.js");
-
+var numberParser    = require("../filterparser/parsers/numberParser.js");
 
 var model 					= module.exports;
 model.init					= init;
@@ -60,6 +60,7 @@ function createFilterParser(table, filter){
 		case "boolean": return boolParser.create(table, filter);
 		case "multiple": return multiParser.create(table, filter);
 		case "string": return stringParser.create(table, filter);
+		case "number": return numberParser.create(table, filter);
 		default: return null;
 	}
 }
