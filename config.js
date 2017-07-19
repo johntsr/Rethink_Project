@@ -1,12 +1,10 @@
-// rethinkdb --port-offset 1  --directory rethinkdb_data2
-
 module.exports = {
 	database: {
 		db: "LiveUpdatesDB",
 		host: "localhost",
 		port: 28015,
 		user: "admin",
-		password: "SKATEBOARD"
+		password: ""
 	},
 
 	tables: {
