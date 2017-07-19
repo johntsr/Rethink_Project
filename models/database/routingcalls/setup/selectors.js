@@ -32,7 +32,7 @@ function spamSelector(filterData){
     	},
 		{
     		name: 'timestamp',
-			op:	'>',
+				op:	'>',
     		value: currentTime
     	}
     ]).toNoSQLQuery();

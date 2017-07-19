@@ -4,15 +4,16 @@ var model 			= module.exports;
 model.create		= create;
 model.GenericParser	= GenericParser;
 
-function create(filter){
+function create(table, filter){
 	'use strict';
-	return new GenericParser(filter);
+	return new GenericParser(table, filter);
 }
 
 // abstract class defining a "GenericParser" based on a user "option"
 // "GenericParser" basically transforms a user contraint on a db column to a query-string
-function GenericParser(filter){
+function GenericParser(table, filter){
 	'use strict';
+	this.table = table;
 	this.filter = filter;
 }
 
@@ -25,7 +26,7 @@ GenericParser.prototype.filterName = function(){
 // get column name
 GenericParser.prototype.filterTable = function(){
 	'use strict';
-	return this.filter.table;
+	return this.table;
 };
 
 // create a constraint-string for this column

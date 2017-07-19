@@ -3,15 +3,15 @@ var generic 	= require("./genericparser.js");
 var model 		= module.exports;
 model.create	= create;
 
-function create(filter){
+function create(table, filter){
 	'use strict';
-	return new StringParser(filter);
+	return new StringParser(table, filter);
 }
 
 // a "StringParser" is a "GenericParser" on a boolean column, whose value is always "false"
-function StringParser (filter){
+function StringParser(table, filter){
 	'use strict';
-	generic.GenericParser.call(this, filter);
+	generic.GenericParser.call(this, table, filter);
 }
 
 StringParser.prototype = Object.create(generic.GenericParser.prototype);

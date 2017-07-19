@@ -8,6 +8,7 @@ model.choiceName 		= choiceName;
 model.noSQL_OR 			= noSQL_OR;
 model.noSQL_OR 			= noSQL_OR;
 model.noSQL_AND 		= noSQL_AND;
+model.noSQL_NOT 		= noSQL_NOT;
 model.valueConstraint	= valueConstraint;
 
 // convert a string representing a rethinkdb query
@@ -74,6 +75,12 @@ function noSQL_OR(expression){
 function noSQL_AND(expression){
 	'use strict';
 	return ".and(" + expression + ")";
+}
+
+// apppend a "not" clause to a db query
+function noSQL_NOT(expression){
+	'use strict';
+	return ".not(" + expression + ")";
 }
 
 // supported operators for a field: "=", "<", ">"

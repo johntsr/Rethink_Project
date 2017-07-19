@@ -5,16 +5,16 @@ var config 		= require("../../../config.js");
 var model 		= module.exports;
 model.create	= create;
 
-function create(filter){
+function create(table, filter){
 	'use strict';
-	return new MultipleFilter(filter);
+	return new MultipleFilter(table, filter);
 }
 
 // a "MultipleFilter" is a "GenericParser" on an enum column, whose value may be 1 of many
 // eg. pet = {dog, cat, parrot, snake}, and "MultipleFilter" demands 1 of {dog, parrot, snake}
-function MultipleFilter (filter){
+function MultipleFilter(table, filter){
 	'use strict';
-	generic.GenericParser.call(this, filter);
+	generic.GenericParser.call(this, table, filter);
 }
 
 MultipleFilter.prototype = Object.create(generic.GenericParser.prototype);

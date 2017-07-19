@@ -1,6 +1,6 @@
 function SendServerData(){
 	this.data = {};
-	this.dataTag = "filterOptions";
+	this.dataTag = 'filterOptions';
 	this.errorInfo = { error: { triggered: false, description: ""} };
 }
 
@@ -16,13 +16,8 @@ SendServerData.prototype.add = function(newLabel, newData){
 	this.data[newLabel] = newData;
 };
 
-SendServerData.prototype.push = function(newData){
-	if( Object.keys(newData).length > 0 ){
-		if(!this.data[this.dataTag]){
-			this.data[this.dataTag] = [];
-		}
-		this.data[this.dataTag].push(newData);
-	}
+SendServerData.prototype.getDataTag = function(){
+	return this.dataTag;
 };
 
 SendServerData.prototype.send = function(serverURL, callback){

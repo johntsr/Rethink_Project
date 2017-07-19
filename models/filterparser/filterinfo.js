@@ -26,7 +26,6 @@ function toggleStatus(status){
 	}
 }
 
-
 // class that extracts all the information regarding a user defined filter
 function FilterInfo(_userID, filterData){
 	'use strict';
@@ -54,34 +53,14 @@ function FilterInfo(_userID, filterData){
 		this.filterInfo.status = FILTER_STATUS.PLAY;
 	}
 
-	// first, get the options of the filter
-	// ie. the column names of the matching table are meant, as defined in "FieldsInfo" table (models/wikipost.js)
-	var filters = filterData.filterOptions;
-  for(var i = 0; i < filters.length; i++){
-    filters[i].table = this.filterInfo.table;
-  }
-
-	// reg. expr. of the query: "(expression)('AND'(expression))*"
-	// so, first apply the expression (column constraint)
-	// and, in the loop, append the rest of the expression with an 'AND'
-
-	var partQuery = sources.createFilterParser(filters[0]).toNoSQLQuery();
-	this.appendQuery(partQuery);
-	for(var i = 1; i < filters.length; i++){
-		partQuery = db_help.noSQL_AND(sources.createFilterParser(filters[i]).toNoSQLQuery());
-		this.appendQuery(partQuery);
-	}
+  var filterAST = filterData.filterOptions;
+  this.filterInfo.query = this.astToString(filterAST);
 }
 
 FilterInfo.prototype.unitMap = {
 	"m" : 60,
 	"h" : 60*60,
 	"d" : 60*60*24
-};
-
-FilterInfo.prototype.appendQuery = function(partQuery){
-	'use strict';
-	this.filterInfo.query += partQuery;
 };
 
 FilterInfo.prototype.filterTitle = function(){
@@ -107,4 +86,23 @@ FilterInfo.prototype.userID = function(){
 FilterInfo.prototype.getData = function(){
 	'use strict';
 	return this.filterInfo;
+};
+
+FilterInfo.prototype.astToString = function(filterAST){
+  var type = filterAST.type;
+  var term1 = filterAST.left;
+  var term2 = filterAST.right;
+
+  if( type === 'and' ){
+    return this.astToString(term1) + db_help.noSQL_AND(this.astToString(term2));
+  }
+  else if ( type === 'or' ){
+    return this.astToString(term1) + db_help.noSQL_OR(this.astToString(term2));
+  }
+  else if ( type === 'not' ){
+    return db_help.noSQL_NOT(this.astToString(term1));
+  }
+  else{
+    return sources.createFilterParser(this.table(), term1).toNoSQLQuery();
+  }
 };

@@ -54,12 +54,12 @@ function addData(tableName, data){
 }
 
 // create a "FilterParser" based on a user "option"
-function createFilterParser(filter){
+function createFilterParser(table, filter){
 	'use strict';
 	switch ( filter.type ) {
-		case "boolean": return boolParser.create(filter);
-		case "multiple": return multiParser.create(filter);
-		case "string": return stringParser.create(filter);
+		case "boolean": return boolParser.create(table, filter);
+		case "multiple": return multiParser.create(table, filter);
+		case "string": return stringParser.create(table, filter);
 		default: return null;
 	}
 }

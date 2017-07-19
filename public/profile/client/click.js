@@ -27,8 +27,12 @@ $('#filter_form').on('submit', function (event) {
 	}
 	sendData.add("table", table);
 
+	filterOptions = [];
 	for (var i = 0; i < fieldParsers[table].length; i++) {
-		fieldParsers[table][i].pushData(sendData);
+		fieldParsers[table][i].pushData(filterOptions);
+	}
+	if( filterOptions.length > 0 ){
+		sendData.add(sendData.getDataTag(), filterArrayToAST(filterOptions, 0));
 	}
 
 	var frequency_count = $('#frequency_count').val();
@@ -73,3 +77,20 @@ $('#filterstuff').hide();
 $('#hideshowfilter').click(function(){
 	$('#filterstuff').toggle("fast");
 });
+
+function filterArrayToAST(filterOptions, startIndex){
+	if ( startIndex === filterOptions.length - 1 ) {
+		return {
+			type: 'simple',
+			left: filterOptions[startIndex]
+		};
+	}
+
+	var result = {type: 'and'};
+	result.left = {
+		type: 'simple',
+		left: filterOptions[startIndex]
+	};
+	result.right = filterArrayToAST(filterOptions, startIndex + 1);
+	return result;
+}

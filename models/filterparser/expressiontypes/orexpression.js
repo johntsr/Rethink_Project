@@ -6,10 +6,10 @@ model.create		= create;
 
 function create(exprArray){
 	'use strict';
-	return new AndExpressions(exprArray);
+	return new OrExpressions(exprArray);
 }
 
-function AndExpressions(exprArray){
+function OrExpressions(exprArray){
 	'use strict';
 	this.exprArray = exprArray;
 	for(var i = 0; i < this.exprArray.length; i++) {
@@ -19,7 +19,7 @@ function AndExpressions(exprArray){
 	}
 }
 
-AndExpressions.prototype.toNoSQLQuery = function(){
+OrExpressions.prototype.toNoSQLQuery = function(){
 	'use strict';
 	var op = this.exprArray[0].op;
 	var value = this.exprArray[0].value;
@@ -27,7 +27,7 @@ AndExpressions.prototype.toNoSQLQuery = function(){
 	for(var i = 1; i < this.exprArray.length; i++) {
 		op = this.exprArray[i].op;
 		value = this.exprArray[i].value;
-		query += db_help.noSQL_AND( filterparser.create(null, this.exprArray[i]).genericOp(op, value) );
+		query += db_help.noSQL_OR( filterparser.create(null, this.exprArray[i]).genericOp(op, value) );
 	}
 	return query;
 };
