@@ -21,12 +21,12 @@ A basic filter creation user interface is provided by the web interace. There, t
 
 For more complex fitlers, one must send the tree structure of the filter and the app server will construct the Rethinkdb query. This tree can be described as:
 ```
-tree := tree AND tree
-      | tree OR tree
-      | NOT tree
-      | basic_filter
+<tree> := <tree> AND <tree>
+      | <tree> OR <tree>
+      | NOT <tree>
+      | <basic_filter>
 
- basic_filter :=  {
+ <basic_filter> :=  {
                     name: bool_field_name,
                     value: true/false
                   }
