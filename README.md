@@ -21,28 +21,28 @@ A basic filter creation user interface is provided by the web interace. There, t
 
 For more complex fitlers, one must send the tree structure of the filter and the app server will construct the Rethinkdb query. This tree can be described as:
 ```
-tree := tree **AND** tree
-      | tree **OR** tree
-      | **NOT** tree
+tree := tree AND tree
+      | tree OR tree
+      | NOT tree
       | basic_filter
 
  basic_filter :=  {
-                    name: *bool_field_name*,
+                    name: bool_field_name,
                     value: true/false
                   }
                |  {
-                    name: *number_field_name*,
-                    op: *=, <, >*,
-                    value: *a numerical value*
+                    name: number_field_name,
+                    op: =, <, >,
+                    value: a numerical value
                   }
                |  {
-                    name: *string_field_name*,
-                    value: *a reg. ex.*
+                    name: string_field_name,
+                    value: a reg. ex.
                   }
                   
                |  {
-                    name: *multiple_choice_field_name*,
-                    value: [*array of true/false, meaning whether the i-th option is valid*]
+                    name: multiple_choice_field_name,
+                    value: [array of true/false, meaning whether the i-th option is valid]
                   }
 ```                  
 The filters are expressed as a json object that represents the above abstract tree. A node in the tree is:
